@@ -1,0 +1,25 @@
+{
+  "name": "subflow-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm --workspace=@subflow/api run dev",
+    "dev:web": "npm --workspace=@subflow/web run dev",
+    "dev:worker": "npm --workspace=@subflow/worker run dev",
+    "dev": "concurrently -n \"API,WEB,WORKER\" -c \"magenta,cyan,yellow\" \"npm run dev:api\" \"npm run dev:web\" \"npm run dev:worker\"",
+    "build": "npm --workspace=@subflow/database run build && npm --workspace=@subflow/shared run build && npm --workspace=@subflow/api run build && npm --workspace=@subflow/web run build && npm --workspace=@subflow/worker run build",
+    "db:generate": "npm --workspace=@subflow/database run db:generate",
+    "db:push": "npm --workspace=@subflow/database run db:push",
+    "db:migrate": "npm --workspace=@subflow/database run db:migrate",
+    "db:seed": "npm --workspace=@subflow/database run db:seed",
+    "test": "npm --workspace=@subflow/api run test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  }
+}
