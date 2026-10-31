@@ -13,26 +13,30 @@ export function Chart({ option, height = '320px', className = '' }: ChartProps) 
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstance = useRef<echarts.ECharts | null>(null);
 
+  // Initialize once and observe container dimension changes (e.g. sidebar collapse)
   useEffect(() => {
     if (!chartRef.current) return;
 
-    if (!chartInstance.current) {
-      chartInstance.current = echarts.init(chartRef.current);
-    }
+    const instance = echarts.init(chartRef.current);
+    chartInstance.current = instance;
 
-    chartInstance.current.setOption(option);
-
-    const handleResize = () => {
-      chartInstance.current?.resize();
-    };
-
-    window.addEventListener('resize', handleResize);
+    const resizeObserver = new ResizeObserver(() => {
+      instance.resize();
+    });
+    resizeObserver.observe(chartRef.current);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
-      chartInstance.current?.dispose();
+      resizeObserver.disconnect();
+      instance.dispose();
       chartInstance.current = null;
     };
+  }, []);
+
+  // Smoothly update options without destroying canvas context or incurring GC overhead
+  useEffect(() => {
+    if (chartInstance.current && option) {
+      chartInstance.current.setOption(option, { notMerge: false, lazyUpdate: true });
+    }
   }, [option]);
 
   return <div ref={chartRef} style={{ height }} className={`w-full ${className}`} />;

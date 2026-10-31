@@ -67,10 +67,11 @@ export async function buildApp(): Promise<FastifyInstance> {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   });
 
-  // Rate Limiting
+  // Rate Limiting with proxy-aware IP key generation
   await app.register(rateLimit, {
-    max: 200,
+    max: process.env.NODE_ENV === 'production' ? 600 : 1500,
     timeWindow: '1 minute',
+    keyGenerator: (request) => (request.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || request.ip,
   });
 
   // Multipart upload

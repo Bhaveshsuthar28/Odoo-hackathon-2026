@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import React, { useState, useEffect, useRef } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { apiRequest } from '@/lib/api';
 import {
@@ -25,8 +25,11 @@ interface TopNavProps {
 
 export function TopNav({ collapsed, mobileOpen, setMobileOpen }: TopNavProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useAuth();
   const [isDark, setIsDark] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [billingRunning, setBillingRunning] = useState(false);
   const [billingResult, setBillingResult] = useState<any>(null);
   const [showResultModal, setShowResultModal] = useState(false);
@@ -57,14 +60,55 @@ export function TopNav({ collapsed, mobileOpen, setMobileOpen }: TopNavProps) {
 
   const pageInfo = getPageInfo();
 
+  useEffect(() => {
+    const saved = localStorage.getItem('subflow_theme');
+    if (saved === 'dark' || (!saved && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+      setIsDark(true);
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const toggleDarkMode = () => {
     const root = document.documentElement;
     if (isDark) {
       root.classList.remove('dark');
+      localStorage.setItem('subflow_theme', 'light');
       setIsDark(false);
     } else {
       root.classList.add('dark');
+      localStorage.setItem('subflow_theme', 'dark');
       setIsDark(true);
+    }
+  };
+
+  const handleGlobalSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = globalSearch.trim();
+    if (!q) return;
+
+    if (q.toUpperCase().startsWith('INV-')) {
+      router.push(`/invoices?search=${encodeURIComponent(q)}`);
+    } else if (q.toUpperCase().startsWith('SUB-')) {
+      router.push(`/subscriptions?search=${encodeURIComponent(q)}`);
+    } else if (q.toUpperCase().startsWith('QUO-')) {
+      router.push(`/quotations?search=${encodeURIComponent(q)}`);
+    } else if (pathname.includes('/invoices')) {
+      router.push(`/invoices?search=${encodeURIComponent(q)}`);
+    } else if (pathname.includes('/subscriptions')) {
+      router.push(`/subscriptions?search=${encodeURIComponent(q)}`);
+    } else if (pathname.includes('/products')) {
+      router.push(`/products?search=${encodeURIComponent(q)}`);
+    } else {
+      router.push(`/customers?search=${encodeURIComponent(q)}`);
     }
   };
 
@@ -115,14 +159,26 @@ export function TopNav({ collapsed, mobileOpen, setMobileOpen }: TopNavProps) {
         {/* Right side controls */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Global search */}
-          <div className="relative hidden lg:block w-64">
+          <form onSubmit={handleGlobalSearch} className="relative hidden lg:block w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737373]" size={14} />
             <input
+              ref={searchInputRef}
               type="text"
-              placeholder="Search records, invoices..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#F8F9FA] dark:bg-[#27272A] border border-[#E5E7EB] dark:border-[#3F3F46] rounded-md focus:outline-none focus:ring-1 focus:ring-[#714B67] dark:text-white"
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+              placeholder="Search records... (Ctrl+K)"
+              className="w-full pl-9 pr-7 py-1.5 text-xs bg-[#F8F9FA] dark:bg-[#27272A] border border-[#E5E7EB] dark:border-[#3F3F46] rounded-md focus:outline-none focus:ring-1 focus:ring-[#714B67] dark:text-white transition-all shadow-inner"
             />
-          </div>
+            {globalSearch && (
+              <button
+                type="button"
+                onClick={() => setGlobalSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </form>
 
           {/* Trigger Scheduled Billing Engine Manually */}
           <button

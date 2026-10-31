@@ -61,7 +61,7 @@ export default function StaffDashboardPage() {
     if (user?.role === 'STAFF' || user?.role === 'ADMIN') {
       loadData();
     }
-  }, [user]);
+  }, [user?.id, user?.role]);
 
   const kpis = metrics?.kpis || {
     activeSubscriptions: 0,

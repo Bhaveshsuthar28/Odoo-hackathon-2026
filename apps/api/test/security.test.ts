@@ -17,6 +17,7 @@ async function runSecurityTestSuite() {
   // Fetch demo accounts
   const adminUser = await prisma.user.findFirst({ where: { role: Role.ADMIN } });
   const customers = await prisma.customer.findMany({
+    where: { userId: { not: null } },
     take: 2,
     include: { user: true, subscriptions: true, invoices: true },
   });

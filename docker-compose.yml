@@ -53,6 +53,7 @@ services:
       - "4000:4000"
     volumes:
       - ./apps/api/src:/app/apps/api/src
+      - ./apps/api/test:/app/apps/api/test
       - ./packages/database:/app/packages/database
       - ./packages/shared:/app/packages/shared
       - ./scripts:/app/scripts

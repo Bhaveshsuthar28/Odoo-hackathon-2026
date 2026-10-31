@@ -10,38 +10,46 @@ export const leakageRoutes: FastifyPluginAsync = async (fastify) => {
     const in14Days = new Date();
     in14Days.setDate(in14Days.getDate() + 14);
 
-    // 1. Failed payments
-    const failedPayments = await prisma.payment.findMany({
-      where: { status: PaymentStatus.FAILED },
-      include: { customer: true, invoice: true },
-      orderBy: { paymentDate: 'desc' },
-    });
+    // Run all leakage queries concurrently in parallel
+    const [
+      failedPayments,
+      overdueInvoices,
+      expiringSubscriptions,
+      skippedBillingSubscriptions,
+    ] = await Promise.all([
+      // 1. Failed payments
+      prisma.payment.findMany({
+        where: { status: PaymentStatus.FAILED },
+        include: { customer: true, invoice: true },
+        orderBy: { paymentDate: 'desc' },
+      }),
 
-    // 2. Overdue invoices
-    const overdueInvoices = await prisma.invoice.findMany({
-      where: { status: InvoiceStatus.OVERDUE },
-      include: { customer: true },
-      orderBy: { dueDate: 'asc' },
-    });
+      // 2. Overdue invoices
+      prisma.invoice.findMany({
+        where: { status: InvoiceStatus.OVERDUE },
+        include: { customer: true },
+        orderBy: { dueDate: 'asc' },
+      }),
 
-    // 3. Expiring subscriptions without auto-renew
-    const expiringSubscriptions = await prisma.subscription.findMany({
-      where: {
-        status: SubscriptionStatus.ACTIVE,
-        autoRenew: false,
-        expiryDate: { lte: in14Days, gte: now },
-      },
-      include: { customer: true, plan: true },
-    });
+      // 3. Expiring subscriptions without auto-renew
+      prisma.subscription.findMany({
+        where: {
+          status: SubscriptionStatus.ACTIVE,
+          autoRenew: false,
+          expiryDate: { lte: in14Days, gte: now },
+        },
+        include: { customer: true, plan: true },
+      }),
 
-    // 4. Overdue/Skipped next billing dates
-    const skippedBillingSubscriptions = await prisma.subscription.findMany({
-      where: {
-        status: SubscriptionStatus.ACTIVE,
-        nextBillingDate: { lt: now },
-      },
-      include: { customer: true, plan: true },
-    });
+      // 4. Overdue/Skipped next billing dates
+      prisma.subscription.findMany({
+        where: {
+          status: SubscriptionStatus.ACTIVE,
+          nextBillingDate: { lt: now },
+        },
+        include: { customer: true, plan: true },
+      }),
+    ]);
 
     // Calculate revenue at risk (failed payment amounts + overdue invoice outstanding balances)
     const failedTotal = failedPayments.reduce((sum, p) => sum.plus(new Decimal(p.amount)), new Decimal(0));

@@ -50,7 +50,7 @@ export default function PaymentsPage() {
         <ControlPanel
           title="Payments Ledger & Cashflow"
           subtitle="Audit trail of all UPI, Card, Net Banking, and cash settlements reconciled with invoices."
-          badge={payments.length ? `${payments.length} transactions` : undefined}
+          badge={filteredPayments.length ? `${filteredPayments.length} transactions` : undefined}
           secondaryActions={[
             {
               label: 'View Invoices',

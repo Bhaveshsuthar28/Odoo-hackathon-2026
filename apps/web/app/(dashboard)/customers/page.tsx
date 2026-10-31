@@ -75,8 +75,11 @@ export default function CustomersPage() {
   }
 
   useEffect(() => {
-    fetchCustomers();
-  }, [page, statusFilter]);
+    const timer = setTimeout(() => {
+      fetchCustomers();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search, page, statusFilter]);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();

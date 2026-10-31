@@ -52,6 +52,8 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
         token = authHeader.substring(7);
       } else if (request.cookies.subflow_token) {
         token = request.cookies.subflow_token;
+      } else if ((request.query as any)?.token) {
+        token = (request.query as any).token;
       }
 
       if (!token) {

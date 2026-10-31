@@ -65,16 +65,21 @@ export const aiAssistantRoutes: FastifyPluginAsync = async (fastify) => {
         take: 5,
       });
 
-      const debtorDetails = await Promise.all(
-        topDebtors.map(async (d) => {
-          const cust = await prisma.customer.findUnique({ where: { id: d.customerId } });
-          return {
-            customerName: cust?.name || 'Unknown',
-            company: cust?.company || 'N/A',
-            outstandingAmount: Number(d._sum.outstandingAmount || 0),
-          };
-        })
-      );
+      const customerIds = topDebtors.map((d) => d.customerId);
+      const customers = await prisma.customer.findMany({
+        where: { id: { in: customerIds } },
+        select: { id: true, name: true, company: true },
+      });
+      const customerMap = new Map(customers.map((c) => [c.id, c]));
+
+      const debtorDetails = topDebtors.map((d) => {
+        const cust = customerMap.get(d.customerId);
+        return {
+          customerName: cust?.name || 'Unknown',
+          company: cust?.company || 'N/A',
+          outstandingAmount: Number(d._sum.outstandingAmount || 0),
+        };
+      });
 
       return reply.send({
         success: true,

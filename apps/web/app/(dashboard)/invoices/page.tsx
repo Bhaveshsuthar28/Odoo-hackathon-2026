@@ -51,8 +51,11 @@ export default function InvoicesPage() {
   }
 
   useEffect(() => {
-    fetchInvoices();
-  }, [statusFilter]);
+    const timer = setTimeout(() => {
+      fetchInvoices();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search, statusFilter]);
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,7 +186,7 @@ export default function InvoicesPage() {
                         <div className="flex items-center justify-end gap-1.5">
                           {/* Download PDF button */}
                           <a
-                            href={`http://localhost:4000/api/invoices/${inv.id}/pdf`}
+                            href={`/api/invoices/${inv.id}/pdf`}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-[#714B67] text-zinc-700 dark:text-zinc-300 hover:text-[#714B67] dark:hover:text-purple-300 transition-colors shadow-sm"

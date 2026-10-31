@@ -18,6 +18,17 @@ export default function CsvImportPage() {
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<any>(null);
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (text) setCsvContent(text);
+    };
+    reader.readAsText(file);
+  };
+
   const handleValidate = async () => {
     setValidating(true);
     setResult(null);
@@ -78,13 +89,20 @@ export default function CsvImportPage() {
                 <FileText size={16} className="text-[#714B67]" />
                 CSV Dataset
               </span>
-              <button
-                type="button"
-                onClick={() => setCsvContent(SAMPLE_CSV)}
-                className="text-xs text-[#714B67] dark:text-purple-300 hover:underline font-semibold"
-              >
-                Reset to Demo Sample
-              </button>
+              <div className="flex items-center gap-3">
+                <label className="cursor-pointer text-xs text-[#714B67] dark:text-purple-300 hover:underline font-semibold flex items-center gap-1">
+                  <UploadCloud size={13} />
+                  <span>Upload .csv file</span>
+                  <input type="file" accept=".csv,text/csv" onChange={handleFileUpload} className="hidden" />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setCsvContent(SAMPLE_CSV)}
+                  className="text-xs text-zinc-500 hover:underline font-semibold"
+                >
+                  Reset Demo
+                </button>
+              </div>
             </div>
 
             <textarea

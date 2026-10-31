@@ -44,8 +44,11 @@ export default function ProductsPage() {
   }
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchProducts();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const handleAddVariant = () => {
     if (!varName || !varSku) return;

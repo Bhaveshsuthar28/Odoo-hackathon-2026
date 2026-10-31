@@ -104,7 +104,7 @@ export default function AdminDashboardPage() {
       loadMetrics();
       loadStaff();
     }
-  }, [user]);
+  }, [user?.id, user?.role]);
 
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();

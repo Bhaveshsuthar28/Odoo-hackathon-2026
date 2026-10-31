@@ -11,6 +11,8 @@ import { Layers, Plus, Pause, Play, X, Loader2, CheckCircle2, Calendar } from 'l
 export default function PlansPage() {
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [intervalFilter, setIntervalFilter] = useState('ALL');
   const [showAddModal, setShowAddModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -81,6 +83,16 @@ export default function PlansPage() {
     }
   };
 
+  const filteredPlans = plans.filter((p) => {
+    const matchesSearch =
+      !search ||
+      p.name?.toLowerCase().includes(search.toLowerCase()) ||
+      p.code?.toLowerCase().includes(search.toLowerCase()) ||
+      p.description?.toLowerCase().includes(search.toLowerCase());
+    const matchesInterval = intervalFilter === 'ALL' || p.billingInterval === intervalFilter;
+    return matchesSearch && matchesInterval;
+  });
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -88,11 +100,28 @@ export default function PlansPage() {
         <ControlPanel
           title="Subscription Plans & Cadences"
           subtitle="Configure recurring billing cadences (Daily, Weekly, Monthly, Yearly) and pricing terms."
-          badge={plans.length ? `${plans.length} tiers` : undefined}
+          badge={filteredPlans.length ? `${filteredPlans.length} tiers` : undefined}
           primaryAction={{
             label: 'New Plan',
             icon: Plus,
             onClick: () => setShowAddModal(true),
+          }}
+          search={{
+            value: search,
+            onChange: setSearch,
+            placeholder: 'Search plans by name or code...',
+          }}
+          filter={{
+            label: 'Interval',
+            value: intervalFilter,
+            onChange: setIntervalFilter,
+            options: [
+              { value: 'ALL', label: 'All Intervals' },
+              { value: 'DAILY', label: 'Daily' },
+              { value: 'WEEKLY', label: 'Weekly' },
+              { value: 'MONTHLY', label: 'Monthly' },
+              { value: 'YEARLY', label: 'Yearly' },
+            ],
           }}
         />
 
@@ -103,14 +132,14 @@ export default function PlansPage() {
               <Loader2 size={24} className="animate-spin mx-auto text-[#714B67] mb-2" />
               Loading subscription plans...
             </div>
-          ) : plans.length === 0 ? (
+          ) : filteredPlans.length === 0 ? (
             <div className="col-span-3 py-16 text-center text-zinc-500">
               <Layers size={36} className="mx-auto text-zinc-400 mb-2 opacity-50" />
               <p className="font-semibold text-zinc-700 dark:text-zinc-300">No subscription plans found</p>
-              <p className="text-xs text-zinc-400 mt-0.5">Click "New Plan" to define your first subscription tier.</p>
+              <p className="text-xs text-zinc-400 mt-0.5">Try altering your search or interval filter.</p>
             </div>
           ) : (
-            plans.map((p) => (
+            filteredPlans.map((p) => (
               <div
                 key={p.id}
                 className="odoo-card p-5 flex flex-col justify-between relative overflow-hidden group hover:border-[#714B67]/40 transition-all"

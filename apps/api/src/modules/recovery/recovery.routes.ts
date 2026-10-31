@@ -77,13 +77,21 @@ export const recoveryRoutes: FastifyPluginAsync = async (fastify) => {
         },
       });
 
-      // Update invoice
+      // Exclusively lock invoice row to prevent race conditions
+      await tx.$queryRaw`SELECT id FROM "Invoice" WHERE id = ${recovery.invoiceId} FOR UPDATE`;
+      const currentInv = await tx.invoice.findUniqueOrThrow({ where: { id: recovery.invoiceId } });
+      const recAmount = new Decimal(recovery.amount);
+      const newPaid = new Decimal(currentInv.amountPaid).plus(recAmount);
+      const newOutstanding = Decimal.max(0, new Decimal(currentInv.totalAmount).minus(newPaid));
+      const newStatus = newOutstanding.lte(0) ? InvoiceStatus.PAID : InvoiceStatus.PARTIALLY_PAID;
+
+      // Update invoice atomically
       const inv = await tx.invoice.update({
         where: { id: recovery.invoiceId },
         data: {
-          amountPaid: { increment: recovery.amount },
-          outstandingAmount: { decrement: recovery.amount },
-          status: InvoiceStatus.PAID,
+          amountPaid: newPaid,
+          outstandingAmount: newOutstanding,
+          status: newStatus,
         },
       });
 

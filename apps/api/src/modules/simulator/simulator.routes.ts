@@ -51,7 +51,8 @@ export const simulatorRoutes: FastifyPluginAsync = async (fastify) => {
 
     // Target plan new charge
     const newPrice = new Decimal(targetPlan.price);
-    const newDailyRate = newPrice.div(totalCycleDays);
+    const targetCycleDays = targetPlan.billingInterval === 'YEARLY' ? 365 : (targetPlan.billingInterval === 'WEEKLY' ? 7 : 30);
+    const newDailyRate = newPrice.div(targetCycleDays);
     const proratedNewCharge = newDailyRate.mul(daysRemaining).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
 
     // Proration difference

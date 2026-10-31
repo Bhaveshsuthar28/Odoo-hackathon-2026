@@ -46,24 +46,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await apiRequest<{ user: User }>('/api/auth/me');
       if (res.success && res.data?.user) {
         setUser(res.data.user);
+        localStorage.setItem('subflow_user', JSON.stringify(res.data.user));
       } else {
-        setUser(null);
+        const msg = res.message?.toLowerCase() || '';
+        if (msg.includes('auth') || msg.includes('token') || msg.includes('session') || msg.includes('401')) {
+          setUser(null);
+          localStorage.removeItem('subflow_user');
+          localStorage.removeItem('subflow_token');
+        }
       }
     } catch {
-      setUser(null);
+      // Retain cached user in state during temporary network blips
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Read cached user from localStorage for instant render
+    const token = localStorage.getItem('subflow_token');
     const cached = localStorage.getItem('subflow_user');
+
+    if (!token && !cached) {
+      setLoading(false);
+      return;
+    }
+
     if (cached) {
       try {
         setUser(JSON.parse(cached));
+        setLoading(false);
       } catch {}
     }
+
     refreshUser();
   }, []);
 

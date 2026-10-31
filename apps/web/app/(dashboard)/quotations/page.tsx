@@ -23,6 +23,8 @@ export default function QuotationsPage() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
   const [showAddModal, setShowAddModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [convertingId, setConvertingId] = useState<string | null>(null);
@@ -138,6 +140,15 @@ export default function QuotationsPage() {
     }
   };
 
+  const filteredQuotations = quotations.filter((q) => {
+    const matchesSearch =
+      !search ||
+      q.quotationNumber?.toLowerCase().includes(search.toLowerCase()) ||
+      q.customer?.name?.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === 'ALL' || q.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -145,11 +156,29 @@ export default function QuotationsPage() {
         <ControlPanel
           title="Quotations & Proposals"
           subtitle="Draft commercial quotes and seamlessly convert accepted bids into active recurring subscriptions."
-          badge={quotations.length ? `${quotations.length} proposals` : undefined}
+          badge={filteredQuotations.length ? `${filteredQuotations.length} proposals` : undefined}
           primaryAction={{
             label: 'New Quotation',
             icon: Plus,
             onClick: () => setShowAddModal(true),
+          }}
+          search={{
+            value: search,
+            onChange: setSearch,
+            placeholder: 'Search by quotation # or customer name...',
+          }}
+          filter={{
+            label: 'Status',
+            value: statusFilter,
+            onChange: setStatusFilter,
+            options: [
+              { value: 'ALL', label: 'All Statuses' },
+              { value: 'DRAFT', label: 'Draft' },
+              { value: 'SENT', label: 'Sent' },
+              { value: 'ACCEPTED', label: 'Accepted' },
+              { value: 'DECLINED', label: 'Declined' },
+              { value: 'CONVERTED', label: 'Converted' },
+            ],
           }}
         />
 
@@ -177,16 +206,16 @@ export default function QuotationsPage() {
                       Loading proposals...
                     </td>
                   </tr>
-                ) : quotations.length === 0 ? (
+                ) : filteredQuotations.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="py-16 text-center text-zinc-500">
                       <FileSpreadsheet size={36} className="mx-auto text-zinc-400 mb-2 opacity-50" />
-                      <p className="font-semibold text-zinc-700 dark:text-zinc-300">No quotations found</p>
-                      <p className="text-xs text-zinc-400 mt-0.5">Click "New Quotation" to create an enterprise proposal.</p>
+                      <p className="font-semibold text-zinc-700 dark:text-zinc-300">No quotations match criteria</p>
+                      <p className="text-xs text-zinc-400 mt-0.5">Try altering your search or status filter.</p>
                     </td>
                   </tr>
                 ) : (
-                  quotations.map((q) => (
+                  filteredQuotations.map((q) => (
                     <tr key={q.id} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40 transition-colors">
                       <td className="py-3.5 px-4 font-mono font-bold text-[#714B67] dark:text-purple-300">
                         {q.quotationNumber}

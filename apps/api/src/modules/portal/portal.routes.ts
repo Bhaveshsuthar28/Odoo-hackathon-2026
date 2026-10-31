@@ -249,4 +249,11 @@ export const portalRoutes: FastifyPluginAsync = async (fastify) => {
       data: { subscription: updated },
     });
   });
+
+  // Invoice PDF endpoint alias for portal consumers
+  fastify.get('/invoices/:id/pdf', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const token = (request.headers.authorization?.substring(7) || request.cookies?.subflow_token) ? '' : '';
+    return reply.redirect(307, `/api/invoices/${id}/pdf`);
+  });
 };

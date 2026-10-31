@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Search, Filter, Plus, LucideIcon } from 'lucide-react';
+import { Search, Filter, Plus, LucideIcon, X } from 'lucide-react';
 
 interface ControlPanelProps {
   title: string;
@@ -137,8 +137,22 @@ export function ControlPanel({
                 placeholder={search.placeholder || 'Search records...'}
                 value={search.value}
                 onChange={(e) => search.onChange(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-[#F9FAFB] dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700/80 rounded-lg placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#714B67] dark:focus:ring-purple-500 text-zinc-900 dark:text-zinc-100 transition-all shadow-inner"
+                className="w-full pl-10 pr-9 py-2 text-xs sm:text-sm bg-[#F9FAFB] dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700/80 rounded-lg placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#714B67] dark:focus:ring-purple-500 text-zinc-900 dark:text-zinc-100 transition-all shadow-inner"
               />
+              {search.value && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    search.onChange('');
+                    if (search.onSubmit) search.onSubmit({ preventDefault: () => {} } as any);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                  aria-label="Clear search"
+                  title="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </form>
           ) : (
             <div />

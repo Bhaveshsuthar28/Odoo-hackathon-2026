@@ -89,7 +89,7 @@ export default function CustomerDashboardPage() {
     if (user?.role === 'CUSTOMER') {
       loadCustomerData();
     }
-  }, [user]);
+  }, [user?.id, user?.role]);
 
   const handlePause = async (subId: string) => {
     if (!confirm('Are you sure you want to pause this subscription?')) return;
@@ -408,7 +408,7 @@ export default function CustomerDashboardPage() {
                             </td>
                             <td className="px-6 py-4 text-right">
                               <a
-                                href={`/api/portal/invoices/${inv.id}/pdf`}
+                                href={`/api/invoices/${inv.id}/pdf`}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E5E7EB] dark:border-[#2E2E32] text-xs font-semibold text-[#714B67] dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40"

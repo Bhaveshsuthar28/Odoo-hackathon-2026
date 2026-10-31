@@ -46,6 +46,9 @@ export const paymentRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       // Execute payment and invoice reconciliation atomically inside a PostgreSQL transaction
       const [payment, updatedInvoice] = await prisma.$transaction(async (tx) => {
+        // Exclusively lock the invoice row in PostgreSQL to prevent race conditions & balance over-allocation
+        await tx.$queryRaw`SELECT id FROM "Invoice" WHERE id = ${invoiceId} FOR UPDATE`;
+
         // Fetch current invoice state inside the transaction to eliminate concurrency race conditions
         const currentInvoice = await tx.invoice.findUnique({
           where: { id: invoiceId },

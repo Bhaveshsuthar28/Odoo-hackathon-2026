@@ -8,7 +8,12 @@ export const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
     const in30Days = new Date();
     in30Days.setDate(in30Days.getDate() + 30);
 
-    // 1. Database-driven KPI aggregates
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
+    // Run all KPI aggregates and chart queries concurrently in parallel for minimum latency
     const [
       activeSubscriptionsCount,
       totalCustomersCount,
@@ -19,18 +24,21 @@ export const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
       upcomingRenewals,
       recentPayments,
       recentSubscriptions,
-    ] = await prisma.$transaction([
-      // Active subscriptions
+      paymentsForTrends,
+      plansWithSubs,
+      subStatuses,
+    ] = await Promise.all([
+      // 1. Active subscriptions count
       prisma.subscription.count({
         where: { status: SubscriptionStatus.ACTIVE },
       }),
 
-      // Total customers
+      // 2. Total active customers count
       prisma.customer.count({
         where: { status: { not: 'ARCHIVED' } },
       }),
 
-      // Active subscriptions for MRR / ARR calculation
+      // 3. Active subscriptions for MRR / ARR calculation
       prisma.subscription.findMany({
         where: { status: SubscriptionStatus.ACTIVE },
         select: {
@@ -39,13 +47,13 @@ export const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
         },
       }),
 
-      // Revenue collected (completed payments)
+      // 4. Revenue collected (completed payments)
       prisma.payment.aggregate({
         where: { status: PaymentStatus.COMPLETED },
         _sum: { amount: true },
       }),
 
-      // Outstanding invoice balances
+      // 5. Outstanding invoice balances
       prisma.invoice.aggregate({
         where: {
           status: { in: [InvoiceStatus.CONFIRMED, InvoiceStatus.PARTIALLY_PAID, InvoiceStatus.OVERDUE] },
@@ -57,14 +65,14 @@ export const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
         },
       }),
 
-      // Overdue invoices
+      // 6. Overdue invoices
       prisma.invoice.findMany({
         where: { status: InvoiceStatus.OVERDUE },
         include: { customer: true },
         orderBy: { dueDate: 'asc' },
       }),
 
-      // Upcoming renewals in next 30 days
+      // 7. Upcoming renewals in next 30 days
       prisma.subscription.findMany({
         where: {
           status: SubscriptionStatus.ACTIVE,
@@ -74,18 +82,43 @@ export const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
         orderBy: { nextBillingDate: 'asc' },
       }),
 
-      // Recent transactions
+      // 8. Recent transactions
       prisma.payment.findMany({
         take: 6,
         include: { customer: true, invoice: true },
         orderBy: { paymentDate: 'desc' },
       }),
 
-      // Recent subscriptions
+      // 9. Recent subscriptions
       prisma.subscription.findMany({
         take: 6,
         include: { customer: true, plan: true },
         orderBy: { createdAt: 'desc' },
+      }),
+
+      // 10. Date-bounded payments for revenue trends (last 6 months)
+      prisma.payment.findMany({
+        where: {
+          status: PaymentStatus.COMPLETED,
+          paymentDate: { gte: sixMonthsAgo },
+        },
+        select: { amount: true, paymentDate: true },
+      }),
+
+      // 11. Plans with subscriptions
+      prisma.plan.findMany({
+        include: {
+          subscriptions: {
+            where: { status: SubscriptionStatus.ACTIVE },
+            select: { totalAmount: true },
+          },
+        },
+      }),
+
+      // 12. Subscription Status breakdown
+      prisma.subscription.groupBy({
+        by: ['status'],
+        _count: { id: true },
       }),
     ]);
 
@@ -119,7 +152,7 @@ export const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
       new Decimal(0)
     );
 
-    // 2. Chart data: Monthly revenue trend (last 6 months of payments from real database records)
+    // 2. Chart data: Monthly revenue trend
     const monthlyTrendMap: Record<string, number> = {};
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -131,12 +164,7 @@ export const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
       monthlyTrendMap[key] = 0;
     }
 
-    const allPaymentsForTrends = await prisma.payment.findMany({
-      where: { status: PaymentStatus.COMPLETED },
-      select: { amount: true, paymentDate: true },
-    });
-
-    for (const p of allPaymentsForTrends) {
+    for (const p of paymentsForTrends) {
       const d = new Date(p.paymentDate);
       const key = `${monthNames[d.getMonth()]} ${d.getFullYear().toString().slice(-2)}`;
       if (monthlyTrendMap[key] !== undefined) {
@@ -150,15 +178,6 @@ export const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
     }));
 
     // 3. Chart data: Revenue by Plan
-    const plansWithSubs = await prisma.plan.findMany({
-      include: {
-        subscriptions: {
-          where: { status: SubscriptionStatus.ACTIVE },
-          select: { totalAmount: true },
-        },
-      },
-    });
-
     const revenueByPlan = plansWithSubs.map((p) => {
       const total = p.subscriptions.reduce((sum, s) => sum.plus(new Decimal(s.totalAmount)), new Decimal(0));
       return {
@@ -168,11 +187,6 @@ export const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
     });
 
     // 4. Chart data: Subscription Status breakdown
-    const subStatuses = await prisma.subscription.groupBy({
-      by: ['status'],
-      _count: { id: true },
-    });
-
     const subscriptionStatusData = subStatuses.map((s) => ({
       status: s.status,
       count: s._count.id,

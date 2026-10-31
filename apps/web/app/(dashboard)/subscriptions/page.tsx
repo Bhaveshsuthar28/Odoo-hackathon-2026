@@ -52,8 +52,11 @@ export default function SubscriptionsPage() {
   }
 
   useEffect(() => {
-    fetchSubscriptions();
-  }, [statusFilter]);
+    const timer = setTimeout(() => {
+      fetchSubscriptions();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search, statusFilter]);
 
   const handleExecuteAction = async (e: React.FormEvent) => {
     e.preventDefault();
