@@ -1,13 +1,14 @@
-version: '3.8'
-
 services:
+  # ============================================================================
+  # PostgreSQL 16 Relational Database Engine
+  # ============================================================================
   postgres:
     image: postgres:16-alpine
     container_name: subflow-postgres
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-subflow}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-subflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-subflow_secure_password}
       POSTGRES_DB: ${POSTGRES_DB:-subflow_db}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
@@ -17,7 +18,109 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-subflow} -d ${POSTGRES_DB:-subflow_db}"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 10s
+    networks:
+      - subflow-network
+
+  # ============================================================================
+  # Fastify REST API Service
+  # ============================================================================
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: dev
+    container_name: subflow-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://${POSTGRES_USER:-subflow}:${POSTGRES_PASSWORD:-subflow_secure_password}@postgres:5432/${POSTGRES_DB:-subflow_db}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-subflow-development-secret-jwt-key-2026}
+      COOKIE_SECRET: ${COOKIE_SECRET:-subflow-development-secret-cookie-key-2026}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./apps/api/src:/app/apps/api/src
+      - ./packages/database:/app/packages/database
+      - ./packages/shared:/app/packages/shared
+      - ./scripts:/app/scripts
+      - /app/node_modules
+      - /app/apps/api/node_modules
+    networks:
+      - subflow-network
+
+  # ============================================================================
+  # Autonomous Billing & Renewal Background Worker
+  # ============================================================================
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+      target: dev
+    container_name: subflow-worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-subflow}:${POSTGRES_PASSWORD:-subflow_secure_password}@postgres:5432/${POSTGRES_DB:-subflow_db}?schema=public
+      BILLING_CRON_SCHEDULE: ${BILLING_CRON_SCHEDULE:-0 * * * *}
+    volumes:
+      - ./apps/worker/src:/app/apps/worker/src
+      - ./packages/database:/app/packages/database
+      - ./packages/shared:/app/packages/shared
+      - /app/node_modules
+      - /app/apps/worker/node_modules
+    networks:
+      - subflow-network
+
+  # ============================================================================
+  # Next.js 15 Web Application
+  # ============================================================================
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: dev
+    container_name: subflow-web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      INTERNAL_API_URL: http://api:4000
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web/app:/app/apps/web/app
+      - ./apps/web/components:/app/apps/web/components
+      - ./apps/web/hooks:/app/apps/web/hooks
+      - ./apps/web/lib:/app/apps/web/lib
+      - ./packages/shared:/app/packages/shared
+      - /app/apps/web/.next
+      - /app/node_modules
+      - /app/apps/web/node_modules
+    networks:
+      - subflow-network
 
 volumes:
   postgres_data:
+    name: subflow_postgres_data
+
+networks:
+  subflow-network:
+    name: subflow_network
+    driver: bridge

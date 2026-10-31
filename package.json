@@ -15,6 +15,7 @@
     "db:generate": "npm --workspace=@subflow/database run db:generate",
     "db:push": "npm --workspace=@subflow/database run db:push",
     "db:migrate": "npm --workspace=@subflow/database run db:migrate",
+    "db:migrate:deploy": "npm --workspace=@subflow/database run db:migrate:deploy",
     "db:seed": "npm --workspace=@subflow/database run db:seed",
     "test": "npm --workspace=@subflow/api run test"
   },
