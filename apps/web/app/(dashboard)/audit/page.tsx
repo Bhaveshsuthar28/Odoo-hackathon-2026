@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { ControlPanel } from '@/components/ui/ControlPanel';
 import { apiRequest } from '@/lib/api';
-import { formatDate } from '@/lib/utils';
 import { History, Search, Filter, ShieldCheck, Loader2 } from 'lucide-react';
 
 export default function AuditPage() {
@@ -38,58 +38,39 @@ export default function AuditPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-[#714B67] dark:bg-purple-950/60 dark:text-purple-300">
-              Intelligence Feature 6
-            </span>
-          </div>
-          <h2 className="text-2xl font-bold tracking-tight text-[#252525] dark:text-white font-heading mt-1">
-            System Audit Trail & Governance
-          </h2>
-          <p className="text-xs text-[#737373] dark:text-[#A1A1AA] mt-0.5">
-            Immutable activity log tracking actors, authentication events, billing executions, and state changes.
-          </p>
-        </div>
-
-        {/* Toolbar */}
-        <div className="odoo-card p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="relative flex-1 w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737373]" size={15} />
-            <input
-              type="text"
-              placeholder="Search by actor email or action..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && fetchLogs()}
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#F7F7F8] dark:bg-[#27272A] border rounded-md"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-[#737373]">Entity:</span>
-            <select
-              value={entityFilter}
-              onChange={(e) => setEntityFilter(e.target.value)}
-              className="px-2.5 py-1.5 text-xs bg-[#F7F7F8] dark:bg-[#27272A] border rounded-md"
-            >
-              <option value="ALL">All Entities</option>
-              <option value="User">User</option>
-              <option value="Customer">Customer</option>
-              <option value="Subscription">Subscription</option>
-              <option value="Invoice">Invoice</option>
-              <option value="Payment">Payment</option>
-              <option value="Quotation">Quotation</option>
-              <option value="BillingExecution">BillingExecution</option>
-            </select>
-          </div>
-        </div>
+        {/* Odoo Control Panel */}
+        <ControlPanel
+          title="System Audit Trail & Governance"
+          subtitle="Immutable activity log tracking actors, auth events, billing engine runs, and financial transitions."
+          badge="COMPLIANCE LOG"
+          search={{
+            value: search,
+            onChange: setSearch,
+            onSubmit: () => fetchLogs(),
+            placeholder: 'Search audit records by actor email or action...',
+          }}
+          filter={{
+            label: 'Entity',
+            value: entityFilter,
+            onChange: setEntityFilter,
+            options: [
+              { value: 'ALL', label: 'All Entities' },
+              { value: 'User', label: 'User' },
+              { value: 'Customer', label: 'Customer' },
+              { value: 'Subscription', label: 'Subscription' },
+              { value: 'Invoice', label: 'Invoice' },
+              { value: 'Payment', label: 'Payment' },
+              { value: 'Quotation', label: 'Quotation' },
+              { value: 'BillingExecution', label: 'BillingExecution' },
+            ],
+          }}
+        />
 
         {/* Audit Log Table */}
         <div className="odoo-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#F7F7F8] dark:bg-[#27272A] text-[#737373] dark:text-[#A1A1AA] uppercase font-semibold">
+              <thead className="bg-[#F9FAFB] dark:bg-zinc-800/60 text-zinc-500 dark:text-zinc-400 uppercase font-bold text-[11px] tracking-wider border-b border-zinc-100 dark:border-zinc-800">
                 <tr>
                   <th className="py-3 px-4">Timestamp</th>
                   <th className="py-3 px-4">Actor</th>
@@ -99,42 +80,43 @@ export default function AuditPage() {
                   <th className="py-3 px-4">Change Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E5E7EB] dark:divide-[#27272A]">
+              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/80">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-[#737373]">
+                    <td colSpan={6} className="py-16 text-center text-zinc-500">
                       <Loader2 size={24} className="animate-spin mx-auto text-[#714B67] mb-2" />
                       Loading audit records...
                     </td>
                   </tr>
                 ) : logs.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-[#737373]">
-                      <History size={32} className="mx-auto mb-2 opacity-50" />
-                      No audit logs match current filters.
+                    <td colSpan={6} className="py-16 text-center text-zinc-500">
+                      <History size={36} className="mx-auto text-zinc-400 mb-2 opacity-50" />
+                      <p className="font-semibold text-zinc-700 dark:text-zinc-300">No audit logs match criteria</p>
+                      <p className="text-xs text-zinc-400 mt-0.5">Try resetting search or entity filters.</p>
                     </td>
                   </tr>
                 ) : (
                   logs.map((l) => (
-                    <tr key={l.id} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                      <td className="py-3 px-4 font-mono text-[11px] text-[#737373] whitespace-nowrap">
+                    <tr key={l.id} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40 transition-colors">
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                         {new Date(l.createdAt).toLocaleString('en-IN')}
                       </td>
-                      <td className="py-3 px-4 font-semibold text-[#252525] dark:text-white">
-                        {l.actorEmail || 'System / Scheduler'}
+                      <td className="py-3.5 px-4 font-semibold text-zinc-900 dark:text-zinc-100">
+                        {l.actorEmail || 'System / Billing Scheduler'}
                       </td>
-                      <td className="py-3 px-4">
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-50 dark:bg-purple-950/40 text-[#714B67] dark:text-purple-300">
+                      <td className="py-3.5 px-4">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-[#714B67] dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200/50">
                           {l.actorRole || 'SYSTEM'}
                         </span>
                       </td>
-                      <td className="py-3 px-4 font-bold text-[#252525] dark:text-white">
+                      <td className="py-3.5 px-4 font-bold text-zinc-900 dark:text-zinc-100">
                         {l.action}
                       </td>
-                      <td className="py-3 px-4 text-[#737373]">
+                      <td className="py-3.5 px-4 text-zinc-600 dark:text-zinc-400 font-medium">
                         {l.entity}
                       </td>
-                      <td className="py-3 px-4 font-mono text-[11px] text-[#737373] max-w-xs truncate">
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-zinc-500 dark:text-zinc-400 max-w-xs truncate">
                         {l.details ? JSON.stringify(l.details) : '—'}
                       </td>
                     </tr>

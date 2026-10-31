@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { ControlPanel } from '@/components/ui/ControlPanel';
 import { apiRequest } from '@/lib/api';
 import { UploadCloud, CheckCircle2, AlertTriangle, FileText, Loader2, ArrowRight } from 'lucide-react';
 
@@ -62,25 +63,18 @@ export default function CsvImportPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-[#714B67] dark:bg-purple-950/60 dark:text-purple-300">
-              Intelligence Feature 4
-            </span>
-          </div>
-          <h2 className="text-2xl font-bold tracking-tight text-[#252525] dark:text-white font-heading mt-1">
-            CSV Customer & Migration Wizard
-          </h2>
-          <p className="text-xs text-[#737373] dark:text-[#A1A1AA] mt-0.5">
-            Migrate legacy customer portfolios with automated schema mapping, syntax validation, and duplicate detection.
-          </p>
-        </div>
+        {/* Odoo Control Panel */}
+        <ControlPanel
+          title="CSV Customer Migration Wizard"
+          subtitle="Migrate legacy customer portfolios with automated schema mapping, syntax validation, and duplicate detection."
+          badge="DATA IMPORTER"
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* CSV Input Panel */}
-          <div className="odoo-card p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="font-heading font-bold text-sm text-[#252525] dark:text-white flex items-center gap-2">
+          <div className="odoo-card p-6 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
+              <span className="font-heading font-extrabold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                 <FileText size={16} className="text-[#714B67]" />
                 CSV Dataset
               </span>
@@ -89,59 +83,59 @@ export default function CsvImportPage() {
                 onClick={() => setCsvContent(SAMPLE_CSV)}
                 className="text-xs text-[#714B67] dark:text-purple-300 hover:underline font-semibold"
               >
-                Reset to Sample
+                Reset to Demo Sample
               </button>
             </div>
 
             <textarea
-              rows={10}
+              rows={11}
               value={csvContent}
               onChange={(e) => setCsvContent(e.target.value)}
-              className="w-full font-mono text-xs p-3 bg-[#F7F7F8] dark:bg-[#27272A] border border-[#E5E7EB] dark:border-[#3F3F46] rounded-md focus:outline-none focus:ring-1 focus:ring-[#714B67]"
+              className="w-full font-mono text-xs p-3.5 bg-[#F9FAFB] dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#714B67] text-zinc-900 dark:text-zinc-100 shadow-inner"
             />
 
             <button
               onClick={handleValidate}
               disabled={validating || !csvContent.trim()}
-              className="w-full py-2.5 text-xs font-semibold rounded-md bg-[#714B67] hover:bg-[#55364E] text-white shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
+              className="btn-odoo-primary w-full py-2.5 text-xs font-bold justify-center disabled:opacity-50"
             >
               {validating ? <Loader2 size={14} className="animate-spin" /> : <UploadCloud size={14} />}
-              <span>Validate & Preview CSV</span>
+              <span>Validate & Preview CSV Payload</span>
             </button>
           </div>
 
           {/* Validation & Preview Panel */}
-          <div className="odoo-card p-5 flex flex-col justify-between">
+          <div className="odoo-card p-6 flex flex-col justify-between">
             <div>
-              <h3 className="font-heading font-bold text-sm text-[#252525] dark:text-white mb-3">
+              <h3 className="font-heading font-extrabold text-sm text-zinc-900 dark:text-zinc-100 mb-4 pb-2 border-b border-zinc-100 dark:border-zinc-800">
                 Validation & Duplicate Inspection
               </h3>
 
               {preview ? (
                 <div className="space-y-4 text-xs">
                   {/* Summary pills */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded border border-emerald-200 dark:border-emerald-800">
-                      <span className="text-[10px] text-emerald-700 uppercase font-bold">Valid Rows</span>
-                      <p className="text-xl font-bold font-heading text-emerald-600">{preview.validCount}</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 text-center">
+                      <span className="text-[10px] text-emerald-700 dark:text-emerald-300 uppercase font-bold tracking-wider">Valid Rows</span>
+                      <p className="text-2xl font-extrabold font-heading text-emerald-600 dark:text-emerald-400 tabular-nums">{preview.validCount}</p>
                     </div>
-                    <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded border border-amber-200 dark:border-amber-800">
-                      <span className="text-[10px] text-amber-700 uppercase font-bold">Duplicates</span>
-                      <p className="text-xl font-bold font-heading text-amber-600">{preview.duplicateCount}</p>
+                    <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-800 text-center">
+                      <span className="text-[10px] text-amber-700 dark:text-amber-300 uppercase font-bold tracking-wider">Duplicates</span>
+                      <p className="text-2xl font-extrabold font-heading text-amber-600 dark:text-amber-400 tabular-nums">{preview.duplicateCount}</p>
                     </div>
-                    <div className="p-3 bg-rose-50 dark:bg-rose-950/40 rounded border border-rose-200 dark:border-rose-800">
-                      <span className="text-[10px] text-rose-700 uppercase font-bold">Errors</span>
-                      <p className="text-xl font-bold font-heading text-rose-600">{preview.errorCount}</p>
+                    <div className="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800 text-center">
+                      <span className="text-[10px] text-rose-700 dark:text-rose-300 uppercase font-bold tracking-wider">Errors</span>
+                      <p className="text-2xl font-extrabold font-heading text-rose-600 dark:text-rose-400 tabular-nums">{preview.errorCount}</p>
                     </div>
                   </div>
 
                   {/* Duplicate warnings */}
                   {preview.duplicates?.length > 0 && (
-                    <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-md">
-                      <span className="font-semibold text-amber-800 block mb-1">Duplicate Rows Skipped:</span>
+                    <div className="p-3.5 bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl">
+                      <span className="font-bold text-amber-800 dark:text-amber-300 block mb-1">Duplicate Rows Skipped:</span>
                       <div className="space-y-1">
                         {preview.duplicates.map((d: any, i: number) => (
-                          <div key={i} className="text-[11px] text-amber-700">
+                          <div key={i} className="text-[11px] text-amber-700 dark:text-amber-400">
                             Row {d.row}: {d.email} ({d.reason})
                           </div>
                         ))}
@@ -152,17 +146,17 @@ export default function CsvImportPage() {
                   {/* Ready to import table */}
                   {preview.previewRows?.length > 0 && (
                     <div>
-                      <span className="font-semibold text-[#252525] dark:text-white block mb-1">
-                        Parsed Records Ready for Import:
+                      <span className="font-bold text-zinc-900 dark:text-zinc-100 block mb-1.5">
+                        Parsed Records Ready for Ingestion:
                       </span>
-                      <div className="divide-y border rounded-md max-h-40 overflow-y-auto">
+                      <div className="divide-y divide-zinc-100 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-xl max-h-48 overflow-y-auto">
                         {preview.previewRows.map((r: any, i: number) => (
-                          <div key={i} className="p-2 flex justify-between">
+                          <div key={i} className="p-2.5 flex justify-between items-center hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
                             <div>
-                              <strong className="text-[#252525] dark:text-white">{r.name}</strong>
-                              <span className="text-[#737373] ml-2">({r.email})</span>
+                              <strong className="text-zinc-900 dark:text-zinc-100 font-semibold">{r.name}</strong>
+                              <span className="text-zinc-400 ml-2 font-mono">({r.email})</span>
                             </div>
-                            <span className="text-[#737373]">{r.company || '—'}</span>
+                            <span className="text-zinc-500 font-medium">{r.company || '—'}</span>
                           </div>
                         ))}
                       </div>
@@ -170,31 +164,33 @@ export default function CsvImportPage() {
                   )}
                 </div>
               ) : result ? (
-                <div className="py-8 text-center text-xs space-y-2">
-                  <CheckCircle2 size={36} className="text-emerald-500 mx-auto" />
-                  <p className="font-bold text-sm text-[#252525] dark:text-white">
-                    {result.message || 'Import Complete!'}
+                <div className="py-12 text-center text-xs space-y-2">
+                  <CheckCircle2 size={40} className="text-emerald-500 mx-auto" />
+                  <p className="font-extrabold text-base text-zinc-900 dark:text-zinc-100">
+                    {result.message || 'Import Execution Succeeded!'}
                   </p>
-                  <p className="text-[#737373]">
-                    {result.importedCount} new customer accounts created in database.
+                  <p className="text-zinc-500">
+                    <strong className="text-emerald-600 font-bold">{result.importedCount}</strong> new customer organizations persisted into PostgreSQL.
                   </p>
                 </div>
               ) : (
-                <div className="py-16 text-center text-xs text-[#737373]">
-                  Click "Validate & Preview CSV" to analyze dataset for duplicates and format errors.
+                <div className="py-20 text-center text-xs text-zinc-400">
+                  <UploadCloud size={40} className="mx-auto mb-2 opacity-40 text-[#714B67]" />
+                  <p className="font-semibold text-zinc-600 dark:text-zinc-400">Awaiting CSV Payload</p>
+                  <p className="text-xs text-zinc-400 mt-0.5">Click "Validate & Preview" to analyze headers, check emails, and filter duplicates.</p>
                 </div>
               )}
             </div>
 
             {preview && preview.validCount > 0 && (
-              <div className="pt-4 border-t border-[#E5E7EB] dark:border-[#27272A] mt-4">
+              <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 mt-4">
                 <button
                   onClick={handleExecuteImport}
                   disabled={importing}
-                  className="w-full py-2.5 text-xs font-semibold rounded-md bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center justify-center gap-2"
+                  className="btn-odoo-primary bg-emerald-600 hover:bg-emerald-700 w-full py-2.5 text-xs font-bold justify-center shadow-md"
                 >
                   {importing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                  <span>Execute Database Import ({preview.validCount} Records)</span>
+                  <span>Execute Database Ingestion ({preview.validCount} Accounts)</span>
                 </button>
               </div>
             )}

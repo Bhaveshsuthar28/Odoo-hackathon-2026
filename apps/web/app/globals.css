@@ -22,7 +22,7 @@
   }
 
   body {
-    background-color: #F7F7F8;
+    background-color: #F8F9FA;
     color: #252525;
     font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-feature-settings: 'tnum' on, 'cv02' on, 'cv03' on, 'cv04' on;
@@ -36,26 +36,172 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-plus-jakarta), sans-serif;
+    letter-spacing: -0.02em;
   }
 }
 
-/* Odoo-inspired card styling */
+/* Odoo-Inspired Enterprise SaaS Design System */
+
 .odoo-card {
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease-in-out;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dark .odoo-card {
   background: #18181B;
   border-color: #27272A;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
 }
 
 .odoo-card:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 6px 16px -2px rgba(113, 75, 103, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
+}
+
+/* Interactive KPI Card */
+.odoo-kpi-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .odoo-kpi-card {
+  background: #18181B;
+  border-color: #27272A;
+}
+
+.odoo-kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: #D1D5DB;
+  box-shadow: 0 10px 24px -4px rgba(113, 75, 103, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
+}
+
+.dark .odoo-kpi-card:hover {
+  border-color: #3F3F46;
+  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.5);
+}
+
+/* Odoo Control Panel */
+.odoo-control-panel {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+}
+
+.dark .odoo-control-panel {
+  background: #18181B;
+  border-color: #27272A;
+}
+
+/* Odoo Button System */
+.btn-odoo-primary {
+  background-color: #714B67;
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.08);
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-odoo-primary:hover {
+  background-color: #55364E;
+  box-shadow: 0 2px 4px 0 rgba(85, 54, 78, 0.25);
+}
+
+.btn-odoo-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-odoo-secondary {
+  background-color: #FFFFFF;
+  color: #374151;
+  border: 1px solid #D1D5DB;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.15s ease-in-out;
+}
+
+.dark .btn-odoo-secondary {
+  background-color: #27272A;
+  color: #EDEDED;
+  border-color: #3F3F46;
+}
+
+.btn-odoo-secondary:hover {
+  background-color: #F9FAFB;
+  border-color: #9CA3AF;
+}
+
+.dark .btn-odoo-secondary:hover {
+  background-color: #3F3F46;
+}
+
+/* Odoo Badges */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.2rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-active, .badge-paid, .badge-completed {
+  background-color: #DCFCE7;
+  color: #15803D;
+}
+.dark .badge-active, .dark .badge-paid, .dark .badge-completed {
+  background-color: rgba(22, 163, 74, 0.2);
+  color: #4ADE80;
+}
+
+.badge-paused, .badge-pending, .badge-partial {
+  background-color: #FEF3C7;
+  color: #B45309;
+}
+.dark .badge-paused, .dark .badge-pending, .dark .badge-partial {
+  background-color: rgba(217, 119, 6, 0.2);
+  color: #FBBF24;
+}
+
+.badge-overdue, .badge-failed, .badge-cancelled {
+  background-color: #FEE2E2;
+  color: #B91C1C;
+}
+.dark .badge-overdue, .dark .badge-failed, .dark .badge-cancelled {
+  background-color: rgba(220, 38, 38, 0.2);
+  color: #F87171;
+}
+
+.badge-draft, .badge-quotation, .badge-converted {
+  background-color: #F3E8FF;
+  color: #714B67;
+}
+.dark .badge-draft, .dark .badge-quotation, .dark .badge-converted {
+  background-color: rgba(113, 75, 103, 0.3);
+  color: #E9D5FF;
 }
 
 /* Scrollbars */

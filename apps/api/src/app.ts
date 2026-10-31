@@ -32,15 +32,35 @@ export async function buildApp(): Promise<FastifyInstance> {
     logger: true,
   });
 
-  // CORS
+  // Secure CORS Configuration
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:4000',
+    'http://127.0.0.1:4000',
+  ];
+  if (process.env.APP_URL) {
+    allowedOrigins.push(process.env.APP_URL);
+  }
+
   await app.register(cors, {
     origin: (origin, cb) => {
-      // allow localhost and local requests
-      if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      // Allow non-browser requests or same-origin server requests
+      if (!origin) {
         cb(null, true);
         return;
       }
-      cb(null, true);
+
+      // Check if origin matches allowed origins or local dev patterns
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+
+      if (isAllowed) {
+        cb(null, true);
+      } else {
+        cb(new Error('Origin blocked by SubFlow CORS security policy'), false);
+      }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

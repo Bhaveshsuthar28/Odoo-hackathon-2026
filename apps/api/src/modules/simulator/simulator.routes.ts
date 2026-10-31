@@ -29,6 +29,15 @@ export const simulatorRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(404).send({ success: false, message: 'Target plan not found' });
     }
 
+    // Role check: if CUSTOMER, enforce data isolation
+    if (
+      request.user.role === 'CUSTOMER' &&
+      subscription.customer.userId !== request.user.id &&
+      subscription.customerId !== request.user.customerId
+    ) {
+      return reply.status(403).send({ success: false, message: 'Access denied: You do not own this subscription' });
+    }
+
     const now = new Date();
     const nextBilling = new Date(subscription.nextBillingDate);
     const msRemaining = Math.max(0, nextBilling.getTime() - now.getTime());

@@ -6,10 +6,12 @@ export const portalRoutes: FastifyPluginAsync = async (fastify) => {
   // All portal routes require authentication and enforce customer scoping
   fastify.addHook('preHandler', fastify.authenticate);
 
-  // Helper to get authenticated customer record
+  // Helper to get authenticated customer record with strict tenant isolation
   async function getCustomerForUser(userId: string, customerIdFromToken?: string | null) {
     if (customerIdFromToken) {
-      const c = await prisma.customer.findUnique({ where: { id: customerIdFromToken } });
+      const c = await prisma.customer.findFirst({
+        where: { id: customerIdFromToken, userId },
+      });
       if (c) return c;
     }
     return prisma.customer.findFirst({

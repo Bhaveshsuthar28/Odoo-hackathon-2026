@@ -6,7 +6,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "tsx test/billing.test.ts"
+    "test": "tsx test/billing.test.ts && tsx test/security.test.ts && tsx test/qa_lifecycle.test.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^9.4.0",

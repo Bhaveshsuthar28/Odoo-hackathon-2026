@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { ControlPanel } from '@/components/ui/ControlPanel';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { apiRequest } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
-import { Package, Plus, Search, Tag, X, Loader2, Layers } from 'lucide-react';
+import { Package, Plus, Search, Tag, X, Loader2, Layers, DollarSign } from 'lucide-react';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -89,67 +91,72 @@ export default function ProductsPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-[#252525] dark:text-white font-heading">
-              Products & Service Catalog
-            </h2>
-            <p className="text-xs text-[#737373] dark:text-[#A1A1AA] mt-0.5">
-              Define recurring billing products, line-item goods, and multi-tier SKUs.
-            </p>
-          </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md bg-[#714B67] hover:bg-[#55364E] text-white shadow-sm transition-all"
-          >
-            <Plus size={16} />
-            <span>Create Product</span>
-          </button>
-        </div>
+        {/* Odoo Control Panel */}
+        <ControlPanel
+          title="Products & Services Catalog"
+          subtitle="Define recurring billing products, line-item goods, and multi-tier SKUs."
+          badge={products.length ? `${products.length} products` : undefined}
+          primaryAction={{
+            label: 'New Product',
+            icon: Plus,
+            onClick: () => setShowAddModal(true),
+          }}
+          search={{
+            value: search,
+            onChange: setSearch,
+            onSubmit: () => fetchProducts(),
+            placeholder: 'Search products by name or SKU...',
+          }}
+        />
 
         {/* Product Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {loading ? (
-            <div className="col-span-3 py-16 text-center text-[#737373]">
+            <div className="col-span-3 py-16 text-center text-zinc-500">
               <Loader2 size={24} className="animate-spin mx-auto text-[#714B67] mb-2" />
               Loading product catalog...
             </div>
           ) : products.length === 0 ? (
-            <div className="col-span-3 py-16 text-center text-[#737373]">
-              <Package size={36} className="mx-auto mb-2 opacity-50" />
-              No products found. Click "Create Product" to add your first item.
+            <div className="col-span-3 py-16 text-center text-zinc-500">
+              <Package size={36} className="mx-auto text-zinc-400 mb-2 opacity-50" />
+              <p className="font-semibold text-zinc-700 dark:text-zinc-300">No products match your criteria</p>
+              <p className="text-xs text-zinc-400 mt-0.5">Click "New Product" to catalog your first offering.</p>
             </div>
           ) : (
             products.map((p) => (
-              <div key={p.id} className="odoo-card p-5 flex flex-col justify-between">
+              <div
+                key={p.id}
+                className="odoo-card p-5 flex flex-col justify-between relative overflow-hidden group hover:border-[#714B67]/40 transition-all"
+              >
+                {/* Accent Top Line */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-[#714B67] opacity-80" />
+
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-950/40 text-[#714B67] dark:text-purple-300 font-bold">
+                    <span className="text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-purple-50 text-[#714B67] dark:bg-purple-950/60 dark:text-purple-300 font-bold border border-purple-200/50 dark:border-purple-800/40">
                       {p.code}
                     </span>
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                      {p.status}
-                    </span>
+                    <StatusBadge status={p.status} />
                   </div>
-                  <h3 className="font-heading font-bold text-base text-[#252525] dark:text-white mt-1">
+
+                  <h3 className="font-heading font-extrabold text-lg text-zinc-900 dark:text-zinc-100 mt-2">
                     {p.name}
                   </h3>
-                  <p className="text-xs text-[#737373] dark:text-[#A1A1AA] mt-1 line-clamp-2">
-                    {p.description || 'No description provided.'}
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 min-h-[36px] line-clamp-2">
+                    {p.description || 'Enterprise product offering with flexible billing.'}
                   </p>
 
                   {/* Variants */}
                   {p.variants?.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-[#E5E7EB] dark:border-[#27272A]">
-                      <span className="text-[11px] font-semibold text-[#737373] block mb-1">
-                        Variants ({p.variants.length}):
+                    <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                      <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider block mb-1.5">
+                        SKU Variants ({p.variants.length}):
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {p.variants.map((v: any) => (
                           <span
                             key={v.id}
-                            className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-[#F7F7F8] dark:bg-[#27272A] border border-[#E5E7EB] dark:border-[#3F3F46] text-[#252525] dark:text-white"
+                            className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700"
                           >
                             <Tag size={10} className="text-[#714B67]" />
                             {v.variantName} (+₹{Number(v.additionalPrice)})
@@ -160,16 +167,16 @@ export default function ProductsPage() {
                   )}
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-[#E5E7EB] dark:border-[#27272A] flex items-center justify-between">
+                <div className="mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] text-[#737373] uppercase font-semibold block">Sales Price</span>
-                    <span className="text-lg font-extrabold font-heading text-[#714B67] dark:text-purple-300">
+                    <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider block">Sales Price</span>
+                    <span className="text-2xl font-extrabold font-heading text-[#714B67] dark:text-purple-300 tabular-nums">
                       {formatCurrency(p.salesPrice)}
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] text-[#737373] uppercase font-semibold block">Cost Price</span>
-                    <span className="text-xs font-semibold text-[#737373]">
+                    <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider block">Cost Basis</span>
+                    <span className="text-xs font-semibold text-zinc-500 tabular-nums">
                       {formatCurrency(p.costPrice)}
                     </span>
                   </div>
@@ -181,51 +188,63 @@ export default function ProductsPage() {
 
         {/* Create Product Modal */}
         {showAddModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="bg-white dark:bg-[#18181B] rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-[#E5E7EB] dark:border-[#27272A] p-6 animate-in fade-in zoom-in-95">
-              <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB] dark:border-[#27272A]">
-                <h3 className="font-heading font-bold text-base text-[#252525] dark:text-white">
-                  Create Product or Service
-                </h3>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-zinc-200 dark:border-zinc-800 p-6 animate-in zoom-in-95">
+              <div className="flex items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-[#714B67] dark:text-purple-300">
+                    <Package size={18} />
+                  </div>
+                  <h3 className="font-heading font-extrabold text-lg text-zinc-900 dark:text-zinc-100">
+                    Create Product or Service
+                  </h3>
+                </div>
                 <button
+                  type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="p-1 text-[#737373] hover:text-[#252525] dark:hover:text-white"
+                  className="p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              <form onSubmit={handleCreateProduct} className="py-4 space-y-3 text-xs">
+              <form onSubmit={handleCreateProduct} className="py-4 space-y-3.5 text-xs">
                 <div>
-                  <label className="block font-semibold text-[#252525] dark:text-white mb-1">Product Name *</label>
+                  <label className="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    Product Name *
+                  </label>
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#F7F7F8] dark:bg-[#27272A] border border-[#E5E7EB] dark:border-[#3F3F46] rounded-md focus:outline-none focus:ring-1 focus:ring-[#714B67]"
+                    className="w-full px-3.5 py-2 bg-[#F9FAFB] dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#714B67]"
                     placeholder="e.g. Dedicated Virtual Server"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-semibold text-[#252525] dark:text-white mb-1">Product Code / SKU *</label>
+                    <label className="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                      SKU Code *
+                    </label>
                     <input
                       type="text"
                       required
                       value={code}
                       onChange={(e) => setCode(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#F7F7F8] dark:bg-[#27272A] border border-[#E5E7EB] dark:border-[#3F3F46] rounded-md focus:outline-none focus:ring-1 focus:ring-[#714B67]"
+                      className="w-full px-3.5 py-2 bg-[#F9FAFB] dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs font-mono uppercase font-semibold focus:outline-none focus:ring-2 focus:ring-[#714B67]"
                       placeholder="e.g. PRD-SRV-04"
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-[#252525] dark:text-white mb-1">Type</label>
+                    <label className="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                      Type
+                    </label>
                     <select
                       value={type}
                       onChange={(e) => setType(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#F7F7F8] dark:bg-[#27272A] border border-[#E5E7EB] dark:border-[#3F3F46] rounded-md focus:outline-none focus:ring-1 focus:ring-[#714B67]"
+                      className="w-full px-3 py-2 bg-[#F9FAFB] dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#714B67]"
                     >
                       <option value="SERVICE">Service (Recurring)</option>
                       <option value="GOODS">Goods / Hardware</option>
@@ -235,95 +254,100 @@ export default function ProductsPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-semibold text-[#252525] dark:text-white mb-1">Sales Price (₹) *</label>
+                    <label className="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                      Sales Price (₹) *
+                    </label>
                     <input
                       type="number"
                       required
                       value={salesPrice}
                       onChange={(e) => setSalesPrice(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#F7F7F8] dark:bg-[#27272A] border border-[#E5E7EB] dark:border-[#3F3F46] rounded-md focus:outline-none focus:ring-1 focus:ring-[#714B67]"
+                      className="w-full px-3.5 py-2 bg-[#F9FAFB] dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-base font-extrabold focus:outline-none focus:ring-2 focus:ring-[#714B67] tabular-nums"
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-[#252525] dark:text-white mb-1">Cost Price (₹)</label>
+                    <label className="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                      Cost Basis (₹)
+                    </label>
                     <input
                       type="number"
                       value={costPrice}
                       onChange={(e) => setCostPrice(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#F7F7F8] dark:bg-[#27272A] border border-[#E5E7EB] dark:border-[#3F3F46] rounded-md focus:outline-none focus:ring-1 focus:ring-[#714B67]"
+                      className="w-full px-3.5 py-2 bg-[#F9FAFB] dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-base font-bold focus:outline-none focus:ring-2 focus:ring-[#714B67] tabular-nums"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#252525] dark:text-white mb-1">Description</label>
+                  <label className="block font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    Description
+                  </label>
                   <textarea
                     rows={2}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#F7F7F8] dark:bg-[#27272A] border border-[#E5E7EB] dark:border-[#3F3F46] rounded-md focus:outline-none focus:ring-1 focus:ring-[#714B67]"
-                    placeholder="Detailed service specifications..."
+                    className="w-full px-3.5 py-2 bg-[#F9FAFB] dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#714B67]"
+                    placeholder="Short product or service specification"
                   />
                 </div>
 
-                {/* Variants builder */}
-                <div className="pt-2 border-t border-[#E5E7EB] dark:border-[#27272A]">
-                  <label className="block font-semibold text-[#252525] dark:text-white mb-1">Add Product Variants</label>
-                  <div className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      placeholder="Variant (e.g. 16GB RAM)"
-                      value={varName}
-                      onChange={(e) => setVarName(e.target.value)}
-                      className="flex-1 px-2.5 py-1.5 bg-[#F7F7F8] dark:bg-[#27272A] border border-[#E5E7EB] dark:border-[#3F3F46] rounded-md"
-                    />
-                    <input
-                      type="text"
-                      placeholder="SKU"
-                      value={varSku}
-                      onChange={(e) => setVarSku(e.target.value)}
-                      className="w-24 px-2.5 py-1.5 bg-[#F7F7F8] dark:bg-[#27272A] border border-[#E5E7EB] dark:border-[#3F3F46] rounded-md"
-                    />
-                    <input
-                      type="number"
-                      placeholder="+Price"
-                      value={varPrice}
-                      onChange={(e) => setVarPrice(e.target.value)}
-                      className="w-20 px-2.5 py-1.5 bg-[#F7F7F8] dark:bg-[#27272A] border border-[#E5E7EB] dark:border-[#3F3F46] rounded-md"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddVariant}
-                      className="px-3 py-1.5 bg-[#714B67] text-white rounded-md font-semibold"
-                    >
-                      Add
-                    </button>
+                {/* Variant Builder */}
+                <div className="p-3 bg-zinc-50/70 dark:bg-zinc-800/40 rounded-xl border border-zinc-200 dark:border-zinc-700/80 space-y-2">
+                  <span className="font-bold text-zinc-900 dark:text-zinc-100 block">
+                    Product Variants (Optional)
+                  </span>
+                  <div className="grid grid-cols-12 gap-2">
+                    <div className="col-span-5">
+                      <input
+                        type="text"
+                        placeholder="Variant Name"
+                        value={varName}
+                        onChange={(e) => setVarName(e.target.value)}
+                        className="w-full px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-md text-xs"
+                      />
+                    </div>
+                    <div className="col-span-4">
+                      <input
+                        type="text"
+                        placeholder="Variant SKU"
+                        value={varSku}
+                        onChange={(e) => setVarSku(e.target.value)}
+                        className="w-full px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-md text-xs font-mono"
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <button
+                        type="button"
+                        onClick={handleAddVariant}
+                        className="w-full py-1.5 bg-[#714B67] text-white font-semibold rounded-md text-xs hover:bg-[#55364E]"
+                      >
+                        + Add
+                      </button>
+                    </div>
                   </div>
-
                   {variants.length > 0 && (
-                    <div className="space-y-1">
+                    <div className="flex flex-wrap gap-1.5 pt-1">
                       {variants.map((v, i) => (
-                        <div key={i} className="flex justify-between items-center bg-[#F7F7F8] dark:bg-[#27272A] p-2 rounded">
-                          <span>{v.variantName} (SKU: {v.sku})</span>
-                          <span className="font-semibold text-emerald-600">+₹{v.additionalPrice}</span>
-                        </div>
+                        <span key={i} className="text-[10px] px-2 py-0.5 rounded bg-white dark:bg-zinc-900 border font-mono">
+                          {v.variantName} ({v.sku})
+                        </span>
                       ))}
                     </div>
                   )}
                 </div>
 
-                <div className="flex justify-end gap-2 pt-4 border-t border-[#E5E7EB] dark:border-[#27272A]">
+                <div className="flex justify-end gap-2.5 pt-4 border-t border-zinc-200 dark:border-zinc-800">
                   <button
                     type="button"
                     onClick={() => setShowAddModal(false)}
-                    className="px-3.5 py-2 text-xs font-semibold rounded-md border border-[#E5E7EB] dark:border-[#3F3F46] text-[#737373]"
+                    className="btn-odoo-secondary text-xs"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-4 py-2 text-xs font-semibold rounded-md bg-[#714B67] hover:bg-[#55364E] text-white shadow-sm flex items-center gap-1.5"
+                    className="btn-odoo-primary text-xs"
                   >
                     {submitting && <Loader2 size={13} className="animate-spin" />}
                     <span>Save Product</span>

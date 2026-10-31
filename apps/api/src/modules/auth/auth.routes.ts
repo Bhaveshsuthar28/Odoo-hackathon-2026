@@ -83,6 +83,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       message: 'Account registered successfully',
       data: {
         user: { id: user.id, email: user.email, name: user.name, role: user.role, customerId: customer.id },
+        customer: { id: customer.id, customerNumber: customer.customerNumber, name: customer.name },
         token,
       },
     });
@@ -230,10 +231,13 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       ipAddress: request.ip,
     });
 
+    if (process.env.NODE_ENV !== 'production') {
+      fastify.log.info({ email, resetToken }, '[DEV ONLY] Password reset token generated');
+    }
+
     return reply.send({
       success: true,
-      message: 'Password reset token generated successfully',
-      data: { resetToken }, // Return in response for test/dev simplicity
+      message: 'If an account with that email exists, password reset instructions have been dispatched.',
     });
   });
 

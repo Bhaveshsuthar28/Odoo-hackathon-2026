@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { ControlPanel } from '@/components/ui/ControlPanel';
 import { apiRequest } from '@/lib/api';
-import { Bot, Send, Sparkles, Loader2, User, CornerDownLeft } from 'lucide-react';
+import { Bot, Send, Sparkles, Loader2, User, CornerDownLeft, Database } from 'lucide-react';
 
 interface Message {
   sender: 'user' | 'assistant';
@@ -78,19 +79,12 @@ export default function AiAssistantPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-[#714B67] dark:bg-purple-950/60 dark:text-purple-300">
-              Intelligence Feature 5
-            </span>
-          </div>
-          <h2 className="text-2xl font-bold tracking-tight text-[#252525] dark:text-white font-heading mt-1">
-            AI Finance Assistant
-          </h2>
-          <p className="text-xs text-[#737373] dark:text-[#A1A1AA] mt-0.5">
-            Database-backed financial queries and revenue analytics with natural language synthesis.
-          </p>
-        </div>
+        {/* Odoo Control Panel */}
+        <ControlPanel
+          title="AI Financial Analyst"
+          subtitle="Ask questions in natural language; SubFlow queries live PostgreSQL ledger transactions to provide accurate financial answers."
+          badge="DATABASE-BACKED"
+        />
 
         {/* Quick Prompts Bar */}
         <div className="flex flex-wrap gap-2">
@@ -98,39 +92,39 @@ export default function AiAssistantPage() {
             <button
               key={i}
               onClick={() => handleSend(prompt)}
-              className="px-3 py-1.5 text-xs rounded-full bg-white dark:bg-[#18181B] border border-[#E5E7EB] dark:border-[#27272A] hover:border-[#714B67] hover:text-[#714B67] dark:hover:text-purple-300 shadow-sm transition-all text-[#252525] dark:text-white flex items-center gap-1.5"
+              className="px-3.5 py-1.5 text-xs font-semibold rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-[#714B67] hover:text-[#714B67] dark:hover:text-purple-300 shadow-sm transition-all text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5 cursor-pointer"
             >
-              <Sparkles size={12} className="text-[#714B67]" />
+              <Sparkles size={13} className="text-[#714B67]" />
               <span>{prompt}</span>
             </button>
           ))}
         </div>
 
         {/* Chat Window */}
-        <div className="odoo-card flex flex-col h-[520px]">
+        <div className="odoo-card flex flex-col h-[540px] overflow-hidden">
           {/* Messages list */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
             {messages.map((m, i) => (
               <div
                 key={i}
                 className={`flex gap-3 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {m.sender === 'assistant' && (
-                  <div className="h-8 w-8 rounded-full bg-[#714B67] flex items-center justify-center text-white shrink-0 shadow-sm">
-                    <Bot size={18} />
+                  <div className="h-8 w-8 rounded-xl bg-[#714B67] flex items-center justify-center text-white shrink-0 shadow-sm">
+                    <Bot size={17} />
                   </div>
                 )}
                 <div
-                  className={`max-w-xl rounded-lg p-3.5 text-xs leading-relaxed ${
+                  className={`max-w-xl rounded-xl p-4 text-xs sm:text-sm leading-relaxed ${
                     m.sender === 'user'
-                      ? 'bg-[#714B67] text-white'
-                      : 'bg-[#F7F7F8] dark:bg-[#27272A] text-[#252525] dark:text-white border border-[#E5E7EB] dark:border-[#3F3F46]'
+                      ? 'bg-[#714B67] text-white shadow-sm'
+                      : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-900 dark:text-zinc-100 border border-zinc-200/80 dark:border-zinc-700/80'
                   }`}
                 >
-                  <p className="whitespace-pre-line">{m.text}</p>
+                  <p className="whitespace-pre-line font-normal">{m.text}</p>
                 </div>
                 {m.sender === 'user' && (
-                  <div className="h-8 w-8 rounded-full bg-[#252525] flex items-center justify-center text-white shrink-0">
+                  <div className="h-8 w-8 rounded-xl bg-zinc-800 dark:bg-zinc-700 flex items-center justify-center text-white shrink-0 shadow-sm">
                     <User size={16} />
                   </div>
                 )}
@@ -139,19 +133,19 @@ export default function AiAssistantPage() {
 
             {loading && (
               <div className="flex gap-3 justify-start">
-                <div className="h-8 w-8 rounded-full bg-[#714B67] flex items-center justify-center text-white shrink-0">
-                  <Bot size={18} />
+                <div className="h-8 w-8 rounded-xl bg-[#714B67] flex items-center justify-center text-white shrink-0 shadow-sm">
+                  <Bot size={17} />
                 </div>
-                <div className="bg-[#F7F7F8] dark:bg-[#27272A] rounded-lg p-3.5 text-xs flex items-center gap-2 text-[#737373]">
-                  <Loader2 size={14} className="animate-spin text-[#714B67]" />
-                  <span>Querying PostgreSQL relational models...</span>
+                <div className="bg-zinc-50 dark:bg-zinc-800/80 rounded-xl p-3.5 text-xs flex items-center gap-2.5 text-zinc-500 border border-zinc-200/80 dark:border-zinc-700/80">
+                  <Loader2 size={15} className="animate-spin text-[#714B67]" />
+                  <span>Synthesizing PostgreSQL ledger query results...</span>
                 </div>
               </div>
             )}
           </div>
 
           {/* Input Box */}
-          <div className="p-3 border-t border-[#E5E7EB] dark:border-[#27272A] bg-white dark:bg-[#18181B]">
+          <div className="p-3.5 border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -161,18 +155,18 @@ export default function AiAssistantPage() {
             >
               <input
                 type="text"
-                placeholder="Ask about revenue, overdue balances, renewal risks, or MRR..."
+                placeholder="Ask about revenue trends, overdue balances, renewal pipeline, or churn analysis..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className="flex-1 px-3.5 py-2 text-xs bg-[#F7F7F8] dark:bg-[#27272A] border border-[#E5E7EB] dark:border-[#3F3F46] rounded-md focus:outline-none focus:ring-1 focus:ring-[#714B67] dark:text-white"
+                className="flex-1 px-4 py-2.5 text-xs sm:text-sm bg-[#F9FAFB] dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#714B67] text-zinc-900 dark:text-zinc-100 shadow-inner"
               />
               <button
                 type="submit"
                 disabled={loading || !input.trim()}
-                className="px-4 py-2 text-xs font-semibold rounded-md bg-[#714B67] hover:bg-[#55364E] text-white shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+                className="btn-odoo-primary px-4 py-2.5 text-xs sm:text-sm font-bold disabled:opacity-50"
               >
-                <span>Send</span>
-                <Send size={13} />
+                <span>Ask</span>
+                <Send size={14} />
               </button>
             </form>
           </div>
