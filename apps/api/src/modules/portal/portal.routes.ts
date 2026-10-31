@@ -488,51 +488,75 @@ export const portalRoutes: FastifyPluginAsync = async (fastify) => {
               data: { walletBalance: updatedBalance },
             });
 
+            const planDescription = plan.product?.name ? `${plan.name} (${plan.product.name})` : plan.name;
             await tx.walletTransaction.create({
               data: {
                 customerId: customer.id,
                 type: 'PURCHASE',
                 amount: price,
                 balanceAfter: updatedBalance,
-                description: `Activated plan: ${plan.name} (${plan.product.name})`,
+                description: `Activated plan: ${planDescription}`,
                 reference: `SRV-ACT-${Date.now()}`,
               },
             });
           }
 
-          // Create Subscription
+          // Resolve valid productId for subscription line
+          let targetProductId = plan.productId;
+          if (!targetProductId) {
+            const planItems = await tx.planItem.findMany({ where: { planId: plan.id } });
+            if (planItems.length > 0) {
+              targetProductId = planItems[0].productId;
+            } else {
+              const defaultProd = await tx.product.findFirst({ where: { status: 'ACTIVE' } });
+              if (defaultProd) targetProductId = defaultProd.id;
+            }
+          }
+
+          // Create Subscription with required subscriptionNumber and financial fields
           const now = new Date();
           const nextBilling = calculateNextBillingDate(now, plan.billingInterval as PlanInterval);
 
+          const subCount = await tx.subscription.count();
+          const randSuffix = Math.floor(1000 + Math.random() * 9000);
+          const subscriptionNumber = `SUB-${now.getFullYear()}-${String(subCount + 1).padStart(4, '0')}-${randSuffix}`;
+
           const subscription = await tx.subscription.create({
             data: {
+              subscriptionNumber,
               customerId: customer.id,
               planId: plan.id,
               status: SubscriptionStatus.ACTIVE,
               startDate: now,
-              currentPeriodStart: now,
-              currentPeriodEnd: nextBilling,
               nextBillingDate: nextBilling,
               billingInterval: plan.billingInterval,
+              paymentTerms: 'Due on Receipt',
+              subtotal: price,
+              discountAmount: 0,
+              taxAmount: 0,
+              totalAmount: price,
               autoRenew: true,
-              lines: {
-                create: [
-                  {
-                    productId: plan.productId,
-                    quantity: 1,
-                    unitPrice: plan.price,
-                    discountPercent: 0,
-                    taxPercent: 18,
-                  },
-                ],
-              },
+              lines: targetProductId
+                ? {
+                    create: [
+                      {
+                        productId: targetProductId,
+                        quantity: 1,
+                        unitPrice: price,
+                        discountPercent: 0,
+                        taxPercent: 18,
+                        subtotal: price,
+                        total: price,
+                      },
+                    ],
+                  }
+                : undefined,
             },
             include: { plan: true },
           });
 
           // Generate Invoice
           const invCount = await tx.invoice.count();
-          const randSuffix = Math.floor(1000 + Math.random() * 9000);
           const invoiceNumber = `INV-${now.getFullYear()}-${String(invCount + 1).padStart(4, '0')}-${randSuffix}`;
 
           const invoice = await tx.invoice.create({
@@ -555,7 +579,7 @@ export const portalRoutes: FastifyPluginAsync = async (fastify) => {
               lines: {
                 create: [
                   {
-                    productId: plan.productId,
+                    productId: targetProductId || undefined,
                     description: `Initial period activation: ${plan.name}`,
                     quantity: 1,
                     unitPrice: price,

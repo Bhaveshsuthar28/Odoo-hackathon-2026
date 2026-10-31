@@ -838,7 +838,7 @@ export default function CustomerDashboardPage() {
                         <div>
                           <div className="text-[11px] text-[#A1A1AA]">Current Period</div>
                           <div className="font-medium text-[#71717A]">
-                            {formatDate(sub.currentPeriodStart)} - {formatDate(sub.currentPeriodEnd)}
+                            {formatDate(sub.startDate)} - {formatDate(sub.nextBillingDate)}
                           </div>
                         </div>
                         <div>
