@@ -21,7 +21,22 @@ export async function apiRequest<T = any>(
       credentials: 'include', // includes HTTP-only cookies
     });
 
-    const data = await response.json();
+    let data: any;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        data = await response.json();
+      } catch {
+        data = { message: `Malformed JSON response from server (${response.status})` };
+      }
+    } else {
+      const text = await response.text();
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { message: text.length > 120 ? `Server returned status ${response.status}` : text || `Server error (${response.status})` };
+      }
+    }
 
     if (!response.ok) {
       return {

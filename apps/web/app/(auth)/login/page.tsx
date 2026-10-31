@@ -1,162 +1,104 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/lib/auth-context';
-import { apiRequest } from '@/lib/api';
-import { Lock, Mail, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
+import { AuthSplitLayout } from '@/components/auth/AuthSplitLayout';
+import { ShieldCheck, UserCheck, Users, ArrowRight, Sparkles } from 'lucide-react';
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('admin@subflow.io');
-  const [password, setPassword] = useState('SubFlow@Admin2026!');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const { login } = useAuth();
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const res = await apiRequest('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (res.success && res.data) {
-        login(res.data.token, res.data.user);
-      } else {
-        setError(res.message || 'Invalid email or password');
-      }
-    } catch (err: any) {
-      setError(err.message || 'Login error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuickFill = (role: 'admin' | 'staff' | 'customer') => {
-    if (role === 'admin') {
-      setEmail('admin@subflow.io');
-      setPassword('SubFlow@Admin2026!');
-    } else if (role === 'staff') {
-      setEmail('sarah.ops@subflow.io');
-      setPassword('SubFlow@Staff2026!');
-    } else {
-      setEmail('john@acmecorp.com');
-      setPassword('Customer@SubFlow2026!');
-    }
-  };
+export default function UniversalLoginPage() {
+  const roleCards = [
+    {
+      title: 'Customer Portal',
+      subtitle: 'Manage subscriptions, invoices & billing',
+      badge: 'Verified Gmail OTP',
+      badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      href: '/customer/login',
+      registerHref: '/customer/register',
+      icon: Users,
+      iconColor: 'bg-emerald-100/70 text-emerald-700',
+    },
+    {
+      title: 'Staff Operations',
+      subtitle: 'Quotations, customer orders & payments',
+      badge: 'Internal Staff',
+      badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
+      href: '/staff/login',
+      icon: UserCheck,
+      iconColor: 'bg-amber-100/70 text-amber-700',
+    },
+    {
+      title: 'Administrator',
+      subtitle: 'Financial analytics, staff provisioning & audit',
+      badge: 'Root Access',
+      badgeColor: 'bg-purple-50 text-[#714B67] border-purple-200',
+      href: '/admin/login',
+      icon: ShieldCheck,
+      iconColor: 'bg-purple-100/70 text-[#714B67]',
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-[#F7F7F8] dark:bg-[#121214] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="mx-auto h-12 w-12 rounded-xl bg-[#714B67] text-white flex items-center justify-center font-extrabold text-2xl font-heading shadow-md">
-          S
-        </div>
-        <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-[#252525] dark:text-white font-heading">
-          SubFlow
-        </h2>
-        <p className="mt-1 text-xs text-[#737373] dark:text-[#A1A1AA]">
-          Every Subscription. Every Payment. Every Invoice.
-        </p>
-      </div>
-
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-        <div className="odoo-card p-8">
-          <form onSubmit={handleLogin} className="space-y-4 text-xs">
-            {error && (
-              <div className="p-3 rounded-md bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <label className="block font-semibold text-[#252525] dark:text-white mb-1">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737373]" size={15} />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-[#F7F7F8] dark:bg-[#27272A] border border-[#E5E7EB] dark:border-[#3F3F46] rounded-md focus:outline-none focus:ring-1 focus:ring-[#714B67]"
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="font-semibold text-[#252525] dark:text-white">Password</label>
-                <Link href="#" className="text-[#714B67] dark:text-purple-300 hover:underline text-[11px]">
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737373]" size={15} />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-[#F7F7F8] dark:bg-[#27272A] border border-[#E5E7EB] dark:border-[#3F3F46] rounded-md focus:outline-none focus:ring-1 focus:ring-[#714B67]"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 text-xs font-semibold rounded-md bg-[#714B67] hover:bg-[#55364E] text-white shadow-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-            >
-              {loading && <Loader2 size={14} className="animate-spin" />}
-              <span>Sign In to SubFlow</span>
-            </button>
-          </form>
-
-          {/* Quick Demo Credentials Bar */}
-          <div className="mt-6 pt-5 border-t border-[#E5E7EB] dark:border-[#27272A] text-center">
-            <span className="text-[11px] font-semibold text-[#737373] uppercase tracking-wider block mb-2">
-              Quick Demonstration Accounts:
-            </span>
-            <div className="flex justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickFill('admin')}
-                className="px-2.5 py-1 text-[11px] rounded bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 text-[#714B67] dark:text-purple-300 font-semibold border border-purple-200 dark:border-purple-800"
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('staff')}
-                className="px-2.5 py-1 text-[11px] rounded bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-800"
-              >
-                Staff (Ops)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('customer')}
-                className="px-2.5 py-1 text-[11px] rounded bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-800"
-              >
-                Customer Portal
-              </button>
-            </div>
+    <AuthSplitLayout>
+      <div className="space-y-6">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#714B67]/10 text-[#714B67] text-[11px] font-bold mb-2">
+            <Sparkles size={12} /> Secure Multi-Role Gateway
           </div>
+          <h2 className="text-2xl font-extrabold text-[#242126] font-heading tracking-tight">
+            Welcome to SubFlow
+          </h2>
+          <p className="text-xs text-[#77727A] mt-1">
+            Sign in to continue to your role-specific workspace.
+          </p>
+        </div>
 
-          <div className="mt-4 text-center">
+        {/* Role Portal Cards */}
+        <div className="space-y-3">
+          {roleCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <Link
+                key={card.title}
+                href={card.href}
+                className="group block p-4 rounded-2xl border border-[#E8E5E9] hover:border-[#714B67] hover:shadow-md transition-all duration-200 bg-white"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${card.iconColor}`}>
+                      <Icon size={20} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-[#242126] group-hover:text-[#714B67] transition-colors">
+                          {card.title}
+                        </span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${card.badgeColor}`}>
+                          {card.badge}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#77727A] mt-0.5">{card.subtitle}</p>
+                    </div>
+                  </div>
+                  <ArrowRight size={16} className="text-[#9D98A1] group-hover:text-[#714B67] group-hover:translate-x-1 transition-all shrink-0 ml-2" />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Customer Self-Registration Link */}
+        <div className="p-3.5 rounded-xl bg-[#F7F7F8] border border-[#E8E5E9] text-center">
+          <p className="text-xs text-[#77727A]">
+            New customer subscribing for the first time?{' '}
             <Link
-              href="/register"
-              className="text-xs text-[#714B67] dark:text-purple-300 hover:underline font-semibold"
+              href="/customer/register"
+              className="font-bold text-[#714B67] hover:underline"
             >
-              Don't have an account? Register as new customer &rarr;
+              Create Account
             </Link>
-          </div>
+          </p>
         </div>
       </div>
-    </div>
+    </AuthSplitLayout>
   );
 }

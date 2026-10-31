@@ -34,6 +34,9 @@ export function TopNav({ collapsed, mobileOpen, setMobileOpen }: TopNavProps) {
   const getPageInfo = () => {
     switch (pathname) {
       case '/': return { title: 'Executive Financial Dashboard', app: 'Accounting & Subscriptions' };
+      case '/admin/dashboard': return { title: 'Administrator Command Center', app: 'Executive & Governance' };
+      case '/staff/dashboard': return { title: 'Staff Operational Workspace', app: 'Operations & Fulfillment' };
+      case '/customer/dashboard': return { title: 'Customer Self-Service Portal', app: 'Subscriber Center' };
       case '/customers': return { title: 'Customer Directory', app: 'Sales & CRM' };
       case '/products': return { title: 'Products & Variants', app: 'Inventory & Catalog' };
       case '/plans': return { title: 'Subscription Plans', app: 'Recurring Billing' };
@@ -85,8 +88,8 @@ export function TopNav({ collapsed, mobileOpen, setMobileOpen }: TopNavProps) {
   return (
     <>
       <header
-        className={`fixed top-0 right-0 z-20 h-16 bg-white dark:bg-[#18181B] border-b border-[#E5E7EB] dark:border-[#27272A] flex items-center justify-between px-4 sm:px-6 transition-all duration-300 left-0 ${
-          collapsed ? 'md:left-16' : 'md:left-64'
+        className={`fixed top-0 right-0 z-20 h-16 bg-white dark:bg-[#18181B] border-b border-[#E5E7EB] dark:border-[#27272A] flex items-center justify-between px-4 sm:px-6 transition-all duration-300 ease-in-out left-0 ${
+          collapsed ? 'md:left-[72px]' : 'md:left-64'
         }`}
       >
         {/* Left: Mobile Toggle & Breadcrumb */}

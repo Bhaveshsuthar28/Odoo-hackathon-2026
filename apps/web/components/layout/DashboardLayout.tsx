@@ -1,14 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Sidebar } from './Sidebar';
 import { TopNav } from './TopNav';
-import { useAuth } from '@/lib/auth-context';
+import { useSidebar } from '@/lib/sidebar-context';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const { user } = useAuth();
+  const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebar();
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#121214]">
@@ -37,8 +35,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content Area */}
       <main
-        className={`pt-20 pb-16 px-4 sm:px-6 lg:px-8 transition-all duration-300 min-h-screen ${
-          collapsed ? 'md:ml-16' : 'md:ml-64'
+        className={`pt-20 pb-16 px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-in-out min-h-screen ${
+          collapsed ? 'md:ml-[72px]' : 'md:ml-64'
         }`}
       >
         <div className="max-w-7xl mx-auto space-y-6">

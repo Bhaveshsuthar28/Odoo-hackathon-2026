@@ -26,6 +26,7 @@ import { recoveryRoutes } from './modules/recovery/recovery.routes.js';
 import { csvImportRoutes } from './modules/csv-import/csv-import.routes.js';
 import { aiAssistantRoutes } from './modules/ai-assistant/ai-assistant.routes.js';
 import { auditRoutes } from './modules/audit/audit.routes.js';
+import { staffRoutes } from './modules/admin/staff.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({
@@ -116,6 +117,9 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Register Business Modules
   await app.register(authRoutes, { prefix: '/api/auth' });
+  await app.register(authRoutes, { prefix: '/auth' });
+  await app.register(staffRoutes, { prefix: '/api/admin/staff' });
+  await app.register(staffRoutes, { prefix: '/admin/staff' });
   await app.register(customerRoutes, { prefix: '/api/customers' });
   await app.register(productRoutes, { prefix: '/api/products' });
   await app.register(planRoutes, { prefix: '/api/plans' });

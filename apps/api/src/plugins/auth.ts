@@ -2,7 +2,7 @@ import fp from 'fastify-plugin';
 import { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 import fastifyJwt from '@fastify/jwt';
 import fastifyCookie from '@fastify/cookie';
-import { Role } from '@subflow/database';
+import { Role, prisma } from '@subflow/database';
 
 export interface AuthUser {
   id: string;
@@ -44,24 +44,39 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
 
   fastify.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
+      let token: string | undefined;
+
       // 1. Try Authorization header
       const authHeader = request.headers.authorization;
       if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.substring(7);
-        const decoded = fastify.jwt.verify<AuthUser>(token);
-        request.user = decoded;
-        return;
+        token = authHeader.substring(7);
+      } else if (request.cookies.subflow_token) {
+        token = request.cookies.subflow_token;
       }
 
-      // 2. Try cookie
-      const token = request.cookies.subflow_token;
-      if (token) {
-        const decoded = fastify.jwt.verify<AuthUser>(token);
-        request.user = decoded;
-        return;
+      if (!token) {
+        return reply.status(401).send({ success: false, message: 'Authentication required' });
       }
 
-      return reply.status(401).send({ success: false, message: 'Authentication required' });
+      const decoded = fastify.jwt.verify<AuthUser>(token);
+
+      // Verify user in database to ensure role integrity and active account status
+      const dbUser = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        select: { id: true, email: true, role: true, name: true, isActive: true, isVerified: true },
+      });
+
+      if (!dbUser || !dbUser.isActive) {
+        return reply.status(401).send({ success: false, message: 'Account is deactivated or does not exist.' });
+      }
+
+      request.user = {
+        id: dbUser.id,
+        email: dbUser.email,
+        name: dbUser.name,
+        role: dbUser.role, // Live role from database
+        customerId: decoded.customerId,
+      };
     } catch (err) {
       return reply.status(401).send({ success: false, message: 'Invalid or expired session token' });
     }

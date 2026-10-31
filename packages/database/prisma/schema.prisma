@@ -87,20 +87,24 @@ enum PaymentStatus {
 }
 
 model User {
-  id                  String               @id @default(uuid())
-  email               String               @unique
-  passwordHash        String
-  name                String
-  role                Role                 @default(STAFF)
-  phone               String?
-  isActive            Boolean              @default(true)
-  avatarUrl           String?
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  id                      String                  @id @default(uuid())
+  email                   String                  @unique
+  passwordHash            String
+  name                    String
+  role                    Role                    @default(STAFF)
+  phone                   String?
+  isActive                Boolean                 @default(true)
+  isVerified              Boolean                 @default(false)
+  requiresPasswordChange  Boolean                 @default(false)
+  avatarUrl               String?
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
 
-  customer            Customer?
-  passwordResetTokens PasswordResetToken[]
-  notifications       Notification[]
+  customer                Customer?
+  passwordResetTokens     PasswordResetToken[]
+  emailVerificationOtps   EmailVerificationOTP[]
+  passwordResetOtps       PasswordResetOTP[]
+  notifications           Notification[]
 
   @@index([email])
   @@index([role])
@@ -540,4 +544,34 @@ model PasswordResetToken {
   createdAt        DateTime          @default(now())
 
   @@index([token])
+}
+
+model EmailVerificationOTP {
+  id         String    @id @default(uuid())
+  email      String
+  otpHash    String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  isUsed     Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String?
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
+model PasswordResetOTP {
+  id         String    @id @default(uuid())
+  email      String
+  otpHash    String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  isUsed     Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String?
+
+  @@index([email])
+  @@index([expiresAt])
 }

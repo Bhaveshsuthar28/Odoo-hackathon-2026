@@ -44,6 +44,11 @@ services:
       JWT_SECRET: ${JWT_SECRET:-subflow-development-secret-jwt-key-2026}
       COOKIE_SECRET: ${COOKIE_SECRET:-subflow-development-secret-cookie-key-2026}
       APP_URL: ${APP_URL:-http://localhost:3000}
+      MAIL_USER: ${MAIL_USER:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_FROM: ${MAIL_FROM:-}
     ports:
       - "4000:4000"
     volumes:
