@@ -105,14 +105,12 @@ export default function CustomerDashboardPage() {
   // Pay Invoice Modal States
   const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
   const [invoicePayMethod, setInvoicePayMethod] = useState<'WALLET' | 'CARD' | 'UPI'>('WALLET');
-  const [confirmInvoicePay, setConfirmInvoicePay] = useState(false);
   const [payingInvoice, setPayingInvoice] = useState(false);
   const [invoicePayError, setInvoicePayError] = useState<string | null>(null);
 
   // Service Activation Modal States
   const [activatingItem, setActivatingItem] = useState<{ type: 'PLAN' | 'PRODUCT'; item: any } | null>(null);
   const [activationPaymentMethod, setActivationPaymentMethod] = useState<'WALLET' | 'CARD' | 'UPI'>('WALLET');
-  const [confirmActivation, setConfirmActivation] = useState(false);
   const [activating, setActivating] = useState(false);
   const [activationMsg, setActivationMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -349,21 +347,21 @@ export default function CustomerDashboardPage() {
 
   // Handle Pay Invoice (Supports Money Cart or Card/UPI)
   const handlePayInvoice = async () => {
-    if (!selectedInvoice || !confirmInvoicePay) return;
+    if (!selectedInvoice) return;
     setPayingInvoice(true);
     setInvoicePayError(null);
     try {
-      const res = await apiRequest(`/api/portal/invoices/${selectedInvoice.id}/pay`, {
+      const res = await apiRequest('/api/payments', {
         method: 'POST',
         body: JSON.stringify({
+          invoiceId: selectedInvoice.id,
           amount: Number(selectedInvoice.outstandingAmount),
           paymentMethod: invoicePayMethod,
-          note: invoicePayMethod === 'WALLET' ? 'Paid with Money Cart Balance' : `Paid via ${invoicePayMethod}`,
+          note: invoicePayMethod === 'WALLET' ? 'Paid with Money Cart Balance' : 'Customer Portal direct payment',
         }),
       });
       if (res.success) {
         setSelectedInvoice(null);
-        setConfirmInvoicePay(false);
         loadCustomerData();
       } else {
         setInvoicePayError(res.message || 'Payment failed.');
@@ -377,7 +375,7 @@ export default function CustomerDashboardPage() {
 
   // Handle Service Activation from Catalog
   const handleActivateService = async () => {
-    if (!activatingItem || !confirmActivation) return;
+    if (!activatingItem) return;
     setActivating(true);
     setActivationMsg(null);
     try {
@@ -401,7 +399,6 @@ export default function CustomerDashboardPage() {
         setActivationMsg({ type: 'success', text: res.message || 'Service activated successfully!' });
         setTimeout(() => {
           setActivatingItem(null);
-          setConfirmActivation(false);
           setActiveTab('subscriptions');
           loadCustomerData();
         }, 1500);
