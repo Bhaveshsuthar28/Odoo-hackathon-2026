@@ -267,6 +267,154 @@ export const portalRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.redirect(307, `/api/invoices/${id}/pdf`);
   });
 
+  // Pay an invoice directly from customer portal (Money Cart or external payment)
+  fastify.post('/invoices/:id/pay', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { paymentMethod = 'WALLET', amount, note } = (request.body as any) || {};
+
+    const customer = await getCustomerForUser(request.user.id, request.user.customerId);
+    if (!customer) {
+      return reply.status(404).send({ success: false, message: 'Customer profile not found' });
+    }
+
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        // Exclusively lock invoice row
+        await tx.$queryRaw`SELECT id FROM "Invoice" WHERE id = ${id} FOR UPDATE`;
+
+        const invoice = await tx.invoice.findUnique({
+          where: { id },
+          include: { customer: true },
+        });
+
+        if (!invoice) {
+          throw new Error('Invoice not found');
+        }
+
+        const isOwner =
+          invoice.customerId === customer.id ||
+          invoice.customer.userId === request.user.id ||
+          (request.user.email && invoice.customer.email.toLowerCase() === request.user.email.toLowerCase());
+
+        if (!isOwner) {
+          throw new Error('Unauthorized to pay this invoice');
+        }
+
+        if (invoice.status === InvoiceStatus.PAID) {
+          throw new Error('This invoice is already fully paid.');
+        }
+
+        if (invoice.status === InvoiceStatus.CANCELLED) {
+          throw new Error('Cannot pay a cancelled invoice.');
+        }
+
+        const outstanding = new Decimal(invoice.outstandingAmount);
+        const paymentAmount = amount ? new Decimal(amount) : outstanding;
+
+        if (paymentAmount.lte(0)) {
+          throw new Error('Payment amount must be greater than zero.');
+        }
+
+        if (paymentAmount.gt(outstanding)) {
+          throw new Error(`Payment amount (₹${paymentAmount.toFixed(2)}) exceeds outstanding due (₹${outstanding.toFixed(2)}).`);
+        }
+
+        let updatedWalletBalance = new Decimal(customer.walletBalance);
+
+        if (paymentMethod === 'WALLET') {
+          await tx.$queryRaw`SELECT id, "walletBalance" FROM "Customer" WHERE id = ${customer.id} FOR UPDATE`;
+          const currentCust = await tx.customer.findUniqueOrThrow({ where: { id: customer.id } });
+          const currentWallet = new Decimal(currentCust.walletBalance);
+
+          if (paymentAmount.gt(currentWallet)) {
+            throw new Error(`Insufficient Money Cart balance: Available ₹${currentWallet.toFixed(2)}, required ₹${paymentAmount.toFixed(2)}. Please add money to your cart first.`);
+          }
+
+          updatedWalletBalance = currentWallet.minus(paymentAmount);
+          await tx.customer.update({
+            where: { id: customer.id },
+            data: { walletBalance: updatedWalletBalance },
+          });
+
+          await tx.walletTransaction.create({
+            data: {
+              customerId: customer.id,
+              type: 'INVOICE_PAYMENT',
+              amount: paymentAmount,
+              balanceAfter: updatedWalletBalance,
+              description: `Paid Invoice #${invoice.invoiceNumber} via Money Cart`,
+              reference: `WAL-INV-${Date.now()}`,
+            },
+          });
+        }
+
+        const newPaid = new Decimal(invoice.amountPaid).plus(paymentAmount);
+        const newOutstanding = new Decimal(invoice.totalAmount).minus(newPaid);
+        let newStatus: InvoiceStatus = invoice.status;
+        if (newOutstanding.lte(0)) {
+          newStatus = InvoiceStatus.PAID;
+        } else if (newPaid.gt(0)) {
+          newStatus = InvoiceStatus.PARTIALLY_PAID;
+        }
+
+        const payCount = await tx.payment.count();
+        const randSuffix = Math.floor(1000 + Math.random() * 9000);
+        const paymentNumber = `PAY-${new Date().getFullYear()}-${String(payCount + 1).padStart(4, '0')}-${randSuffix}`;
+
+        const payment = await tx.payment.create({
+          data: {
+            paymentNumber,
+            invoiceId: invoice.id,
+            customerId: customer.id,
+            paymentMethod: paymentMethod as PaymentMethod,
+            amount: paymentAmount,
+            paymentDate: new Date(),
+            reference: `PORTAL-PAY-${Date.now()}`,
+            note: note || (paymentMethod === 'WALLET' ? 'Paid via SubFlow Money Cart Wallet' : 'Customer Portal direct payment'),
+            status: PaymentStatus.COMPLETED,
+          },
+        });
+
+        const updatedInvoice = await tx.invoice.update({
+          where: { id: invoice.id },
+          data: {
+            amountPaid: newPaid,
+            outstandingAmount: newOutstanding,
+            status: newStatus,
+          },
+        });
+
+        return { payment, updatedInvoice, updatedWalletBalance };
+      });
+
+      await createAuditLog({
+        actorId: request.user.id,
+        actorEmail: request.user.email,
+        actorRole: request.user.role,
+        action: 'PORTAL_INVOICE_PAID',
+        entity: 'Invoice',
+        entityId: id,
+        details: { amount: result.payment.amount, paymentMethod },
+        ipAddress: request.ip,
+      });
+
+      return reply.send({
+        success: true,
+        message: `Successfully paid ₹${result.payment.amount} for Invoice #${result.updatedInvoice.invoiceNumber}!`,
+        data: {
+          payment: result.payment,
+          invoice: result.updatedInvoice,
+          walletBalance: result.updatedWalletBalance,
+        },
+      });
+    } catch (err: any) {
+      return reply.status(400).send({
+        success: false,
+        message: err.message || 'Payment processing failed',
+      });
+    }
+  });
+
   // Get customer Money Cart (wallet balance and transactions)
   fastify.get('/wallet', async (request, reply) => {
     const customer = await getCustomerForUser(request.user.id, request.user.customerId);
