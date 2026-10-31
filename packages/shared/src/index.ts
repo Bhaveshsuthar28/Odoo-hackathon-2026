@@ -195,7 +195,7 @@ export const discountSchema = z.object({
 export const paymentSchema = z.object({
   invoiceId: z.string().uuid(),
   amount: z.number().positive('Payment amount must be greater than 0'),
-  paymentMethod: z.enum(['UPI', 'CASH', 'CARD', 'BANK_TRANSFER']).default('CARD'),
+  paymentMethod: z.enum(['UPI', 'CASH', 'CARD', 'BANK_TRANSFER', 'WALLET']).default('CARD'),
   reference: z.string().optional(),
   note: z.string().optional(),
 });

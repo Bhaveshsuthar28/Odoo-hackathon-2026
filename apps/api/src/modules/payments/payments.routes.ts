@@ -95,6 +95,31 @@ export const paymentRoutes: FastifyPluginAsync = async (fastify) => {
           newStatus = InvoiceStatus.PARTIALLY_PAID;
         }
 
+        if (paymentMethod === 'WALLET') {
+          // Lock customer record to prevent concurrent double-spending from wallet
+          await tx.$queryRaw`SELECT id, "walletBalance" FROM "Customer" WHERE id = ${currentInvoice.customerId} FOR UPDATE`;
+          const currentCustomer = await tx.customer.findUniqueOrThrow({ where: { id: currentInvoice.customerId } });
+          const currentWallet = new Decimal(currentCustomer.walletBalance);
+          if (paymentAmount.gt(currentWallet)) {
+            throw new Error(`ERR_INSUFFICIENT_WALLET_BALANCE:Available ₹${currentWallet.toFixed(2)}, required ₹${paymentAmount.toFixed(2)}`);
+          }
+          const updatedBalance = currentWallet.minus(paymentAmount);
+          await tx.customer.update({
+            where: { id: currentInvoice.customerId },
+            data: { walletBalance: updatedBalance },
+          });
+          await tx.walletTransaction.create({
+            data: {
+              customerId: currentInvoice.customerId,
+              type: 'INVOICE_PAYMENT',
+              amount: paymentAmount,
+              balanceAfter: updatedBalance,
+              description: `Paid Invoice #${currentInvoice.invoiceNumber} via Money Cart`,
+              reference: reference || `WAL-PAY-${Date.now()}`,
+            },
+          });
+        }
+
         const p = await tx.payment.create({
           data: {
             paymentNumber,
@@ -104,7 +129,7 @@ export const paymentRoutes: FastifyPluginAsync = async (fastify) => {
             amount: paymentAmount,
             paymentDate: new Date(),
             reference: reference || `REF-${Date.now()}`,
-            note,
+            note: note || (paymentMethod === 'WALLET' ? 'Paid via SubFlow Money Cart Wallet' : undefined),
             status: PaymentStatus.COMPLETED,
           },
         });
@@ -157,6 +182,13 @@ export const paymentRoutes: FastifyPluginAsync = async (fastify) => {
       }
       if (err.message === 'ERR_INVOICE_CANCELLED') {
         return reply.status(400).send({ success: false, message: 'Cannot record payment for a cancelled invoice.' });
+      }
+      if (err.message?.startsWith('ERR_INSUFFICIENT_WALLET_BALANCE:')) {
+        const msg = err.message.replace('ERR_INSUFFICIENT_WALLET_BALANCE:', '');
+        return reply.status(400).send({
+          success: false,
+          message: `Insufficient Money Cart balance: ${msg}. Please add money to your wallet.`,
+        });
       }
       if (err.message?.startsWith('ERR_EXCEEDS_OUTSTANDING:')) {
         const bal = err.message.split(':')[1];

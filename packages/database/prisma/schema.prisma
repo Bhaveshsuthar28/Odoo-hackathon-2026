@@ -78,6 +78,15 @@ enum PaymentMethod {
   CASH
   CARD
   BANK_TRANSFER
+  WALLET
+}
+
+enum WalletTxType {
+  TOPUP
+  PURCHASE
+  INVOICE_PAYMENT
+  USAGE_CHARGE
+  REFUND
 }
 
 enum PaymentStatus {
@@ -131,6 +140,9 @@ model Customer {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
+  walletBalance    Decimal           @default(0.00) @db.Decimal(12, 2)
+  walletTransactions WalletTransaction[]
+
   quotations       Quotation[]
   subscriptions    Subscription[]
   invoices         Invoice[]
@@ -140,6 +152,21 @@ model Customer {
   @@index([email])
   @@index([customerNumber])
   @@index([status])
+}
+
+model WalletTransaction {
+  id             String          @id @default(uuid())
+  customerId     String
+  customer       Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type           WalletTxType    @default(TOPUP)
+  amount         Decimal         @db.Decimal(12, 2)
+  balanceAfter   Decimal         @db.Decimal(12, 2)
+  description    String
+  reference      String?
+  createdAt      DateTime        @default(now())
+
+  @@index([customerId])
+  @@index([createdAt])
 }
 
 model Product {
